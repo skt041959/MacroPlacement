@@ -132,7 +132,8 @@ def train():
     # Generate Dashboard
     print("Generating Dashboard...")
     viz = DashboardGenerator()
-    viz.generate(history, last_episode_snapshots)
+    # Pass the last used netlist
+    viz.generate(history, last_episode_snapshots, netlist)
 
 if __name__ == "__main__":
     train()

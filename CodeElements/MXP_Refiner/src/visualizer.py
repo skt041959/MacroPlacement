@@ -17,11 +17,12 @@ class DashboardGenerator:
         plt.close(fig)
         return img_str
 
-    def generate(self, history, layout_snapshots):
+    def generate(self, history, layout_snapshots, netlist=None):
         """
         history: dict with keys 'rewards', 'losses' (list of floats)
         layout_snapshots: list of lists (snapshots of macros at each step of an episode)
                           each macro is a dict {'x', 'y', 'w', 'h', 'id'}
+        netlist: list of tuples (u, v, weight) [Optional]
         """
         
         # 1. Generate Training Curves
@@ -47,6 +48,7 @@ class DashboardGenerator:
         canvas_height = Config.CANVAS_HEIGHT
         
         snapshots_json = json.dumps(layout_snapshots)
+        netlist_json = json.dumps(netlist) if netlist else "[]"
         
         html_content = f"""
 <!DOCTYPE html>
@@ -93,6 +95,7 @@ class DashboardGenerator:
 
     <script>
         const snapshots = {snapshots_json};
+        const netlist = {netlist_json};
         const canvas = document.getElementById('layoutCanvas');
         const ctx = canvas.getContext('2d');
         const scale = 0.5; // Scale down for display
@@ -111,6 +114,30 @@ class DashboardGenerator:
             ctx.strokeStyle = '#999';
             ctx.strokeRect(0, 0, {canvas_width} * scale, {canvas_height} * scale);
             
+            // Draw Netlist Connections (Background)
+            if (netlist && netlist.length > 0) {{
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(150, 150, 150, 0.2)'; // Very faint
+                ctx.lineWidth = 1;
+                
+                netlist.forEach(net => {{
+                    const u = net[0];
+                    const v = net[1];
+                    
+                    if (macros[u] && macros[v]) {{
+                        const x1 = (macros[u].x + macros[u].w / 2) * scale;
+                        const y1 = (macros[u].y + macros[u].h / 2) * scale;
+                        const x2 = (macros[v].x + macros[v].w / 2) * scale;
+                        const y2 = (macros[v].y + macros[v].h / 2) * scale;
+                        
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                    }}
+                }});
+                ctx.stroke();
+            }}
+            
+            // Draw Macros
             macros.forEach(macro => {{
                 const x = macro.x * scale;
                 const y = macro.y * scale;
