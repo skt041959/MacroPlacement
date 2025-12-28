@@ -44,3 +44,34 @@ def test_total_overlap():
     # m0 and m2: 0
     # m1 and m2: 0
     assert calculate_total_overlap(macros) == 50.0
+
+def test_alignment_score_perfect():
+    from src.geometry import calculate_alignment_score
+    macros = [
+        {'x': 0, 'y': 0, 'w': 10, 'h': 10},
+        {'x': 0, 'y': 20, 'w': 10, 'h': 10}, # X aligned
+        {'x': 20, 'y': 20, 'w': 10, 'h': 10} # Y aligned with m1
+    ]
+    # m0 and m1 aligned on X
+    # m1 and m2 aligned on Y
+    # Total score should be > 0
+    score = calculate_alignment_score(macros)
+    assert score > 0
+
+def test_alignment_score_none():
+    from src.geometry import calculate_alignment_score
+    macros = [
+        {'x': 0, 'y': 0, 'w': 10, 'h': 10},
+        {'x': 13, 'y': 27, 'w': 10, 'h': 10}
+    ]
+    assert calculate_alignment_score(macros) == 0.0
+
+def test_grid_alignment():
+    from src.geometry import calculate_alignment_score
+    macros = [
+        {'x': 10, 'y': 10, 'w': 10, 'h': 10},
+        {'x': 20, 'y': 20, 'w': 10, 'h': 10}
+    ]
+    # Both are on 10-unit grid
+    score = calculate_alignment_score(macros, grid_size=10.0)
+    assert score > 0

@@ -23,3 +23,35 @@ def calculate_total_overlap(macros):
         for j in range(i + 1, n):
             total_overlap += calculate_overlap_area(macros[i], macros[j])
     return total_overlap
+
+def calculate_alignment_score(macros, grid_size=None, threshold=0.1):
+    """
+    Calculates an alignment score for a list of macros.
+    Score increases with the number of aligned edges.
+    """
+    score = 0.0
+    n = len(macros)
+    
+    # 1. Edge alignment (pairwise)
+    for i in range(n):
+        for j in range(i + 1, n):
+            # Check X alignment (left edges)
+            if abs(macros[i]['x'] - macros[j]['x']) < threshold:
+                score += 1.0
+            # Check Y alignment (bottom edges)
+            if abs(macros[i]['y'] - macros[j]['y']) < threshold:
+                score += 1.0
+                
+    # 2. Grid alignment
+    if grid_size is not None:
+        for m in macros:
+            # Check x alignment to grid
+            x_mod = m['x'] % grid_size
+            if x_mod < threshold or abs(grid_size - x_mod) < threshold:
+                score += 1.0
+            # Check y alignment to grid
+            y_mod = m['y'] % grid_size
+            if y_mod < threshold or abs(grid_size - y_mod) < threshold:
+                score += 1.0
+                
+    return score
