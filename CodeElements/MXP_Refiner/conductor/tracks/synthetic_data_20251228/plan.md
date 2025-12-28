@@ -2,7 +2,7 @@
 
 ## Phase 1: Core Geometric Kernels
 - [x] Task: Implement optimized overlap detection and area calculation functions. (16e54e4)
-- [ ] Task: Implement alignment score functions (X-axis, Y-axis, and grid-based).
+- [x] Task: Implement alignment score functions (X-axis, Y-axis, and grid-based). (098c796)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Geometric Kernels' (Protocol in workflow.md)
 
 ## Phase 2: Synthetic Data Generator
