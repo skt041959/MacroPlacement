@@ -6,7 +6,7 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Geometric Kernels' (Protocol in workflow.md)
 
 ## Phase 2: Synthetic Data Generator
-- [ ] Task: Implement SyntheticDataGenerator with support for random and pattern-based placement.
+- [x] Task: Implement SyntheticDataGenerator with support for random and pattern-based placement. (7e7071a)
 - [ ] Task: Add configuration options in src/config.py for data generation (e.g., SEED, GENERATION_MODE).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Synthetic Data Generator' (Protocol in workflow.md)
 
