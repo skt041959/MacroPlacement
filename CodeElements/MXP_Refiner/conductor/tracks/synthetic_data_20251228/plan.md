@@ -7,7 +7,7 @@
 
 ## Phase 2: Synthetic Data Generator
 - [x] Task: Implement SyntheticDataGenerator with support for random and pattern-based placement. (7e7071a)
-- [ ] Task: Add configuration options in src/config.py for data generation (e.g., SEED, GENERATION_MODE).
+- [x] Task: Add configuration options in src/config.py for data generation (e.g., SEED, GENERATION_MODE). (1200e78)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Synthetic Data Generator' (Protocol in workflow.md)
 
 ## Phase 3: Testing & Validation
