@@ -1,6 +1,6 @@
 # Plan: Synthetic Data Generation & Geometric Verification
 
-## Phase 1: Core Geometric Kernels
+## Phase 1: Core Geometric Kernels [checkpoint: fbecc6d]
 - [x] Task: Implement optimized overlap detection and area calculation functions. (16e54e4)
 - [x] Task: Implement alignment score functions (X-axis, Y-axis, and grid-based). (098c796)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Core Geometric Kernels' (Protocol in workflow.md)
