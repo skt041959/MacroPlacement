@@ -19,3 +19,8 @@ class Config:
     # RL 参数
     LR = 3e-4
     GAMMA = 0.99
+    
+    # 数据生成参数
+    SEED = 42
+    GENERATION_MODE = 'random' # 'random', 'grid', 'rows'
+    GRID_COLS = 10
