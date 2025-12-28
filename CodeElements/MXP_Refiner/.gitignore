@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.pyc
+model.pth
+dashboard.html
+.vscode/
+.idea/
+.DS_Store
