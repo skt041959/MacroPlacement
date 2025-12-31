@@ -6,7 +6,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Model Architecture' (Protocol in workflow.md) (24268a2)
 
 ## Phase 2: Supervised Training Pipeline
-- [ ] Task: Implement a dataset loader that wraps SyntheticDataGenerator for PyTorch training.
+- [x] Task: Implement a dataset loader that wraps SyntheticDataGenerator for PyTorch training. (43b44f4)
 - [ ] Task: Write the supervised training script (src/train_restorer.py) with MSE loss.
 - [ ] Task: Add alignment-aware loss terms to the training objective.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Supervised Training Pipeline' (Protocol in workflow.md)
