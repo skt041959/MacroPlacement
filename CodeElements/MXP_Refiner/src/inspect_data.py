@@ -2,15 +2,13 @@ from generator import SyntheticDataGenerator
 from config import Config
 from visualizer import GalleryGenerator
 from data_builder import GraphBuilder
+from restore_floorplan import FloorplanRestorationInference
 import os
 import numpy as np
 
 def get_graph_edges(macros):
     # Dummy netlist for now
     netlist = [] 
-    # Or create a random one to see logic edges?
-    # netlist = [(np.random.randint(0, len(macros)), np.random.randint(0, len(macros)), 1.0) 
-    #            for _ in range(len(macros))]
     
     builder = GraphBuilder(macros, netlist)
     graph = builder.build_hetero_graph()
@@ -40,6 +38,9 @@ def inspect_data():
                                      canvas_width=Config.CANVAS_WIDTH, 
                                      canvas_height=Config.CANVAS_HEIGHT)
     
+    # Initialize Restorer
+    restorer = FloorplanRestorationInference()
+    
     # We want "two kinds of macro size, each size has 10 macros" -> Total 20 macros, 2 clusters.
     count = 20
     
@@ -58,16 +59,26 @@ def inspect_data():
         
         # Generate Multiple Disturbed Samples from this Reference
         samples = []
-        for s in range(4):
+        restored_list = []
+        for s in range(2): # 2 samples per group for cleaner gallery
             # We use the internal helper to just perturb the existing reference
             disturbed = generator._perturb_macros(aligned, noise_level=Config.NOISE_LEVEL)
             
+            # Restore
+            restored = restorer.restore(disturbed)
+            
             # Build graph for disturbed
             dist_edges = get_graph_edges(disturbed)
+            # Build graph for restored
+            rest_edges = get_graph_edges(restored)
             
             samples.append({
                 'macros': disturbed,
                 'edges': dist_edges
+            })
+            restored_list.append({
+                'macros': restored,
+                'edges': rest_edges
             })
             
         data_groups.append({
@@ -75,7 +86,8 @@ def inspect_data():
                 'macros': aligned,
                 'edges': ref_edges
             },
-            'samples': samples
+            'samples': samples,
+            'restored': restored_list
         })
     
     output_path = "data_preview.html"

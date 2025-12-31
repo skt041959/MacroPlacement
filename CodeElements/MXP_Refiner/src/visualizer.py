@@ -211,7 +211,8 @@ class GalleryGenerator(DashboardGenerator):
         data_groups: list of dicts:
         {
             'reference': {'macros': [macros], 'edges': {type: [[u,v], ...]}},
-            'samples': [{'macros': [macros], 'edges': {type: [[u,v], ...]}}, ...]
+            'samples': [{'macros': [macros], 'edges': {type: [[u,v], ...]}}, ...],
+            'restored': [{'macros': [macros], 'edges': {type: [[u,v], ...]}}, ...] (Optional)
         }
         """
         canvas_width = Config.CANVAS_WIDTH
@@ -365,8 +366,9 @@ class GalleryGenerator(DashboardGenerator):
             refDiv.appendChild(refCanvas);
             rowDiv.appendChild(refDiv);
             
-            // Samples
+            // Samples & Restored Pairs
             group.samples.forEach((sample, sIndex) => {{
+                // Disturbed Cell
                 const sDiv = document.createElement('div');
                 sDiv.className = 'cell';
                 const sTitle = document.createElement('h3');
@@ -378,6 +380,21 @@ class GalleryGenerator(DashboardGenerator):
                 sDiv.appendChild(sTitle);
                 sDiv.appendChild(sCanvas);
                 rowDiv.appendChild(sDiv);
+                
+                // Restored Cell (if exists)
+                if (group.restored && group.restored[sIndex]) {{
+                    const rDiv = document.createElement('div');
+                    rDiv.className = 'cell';
+                    const rTitle = document.createElement('h3');
+                    rTitle.innerText = `Sample ${{sIndex + 1}} (Restored)`;
+                    const rCanvas = document.createElement('canvas');
+                    rCanvas.width = canvasW;
+                    rCanvas.height = canvasH;
+                    drawScene(rCanvas.getContext('2d'), group.restored[sIndex]);
+                    rDiv.appendChild(rTitle);
+                    rDiv.appendChild(rCanvas);
+                    rowDiv.appendChild(rDiv);
+                }}
             }});
             
             groupDiv.appendChild(rowDiv);
