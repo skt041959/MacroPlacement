@@ -204,3 +204,191 @@ class DashboardGenerator:
             f.write(html_content)
         
         print(f"Dashboard generated at: {os.path.abspath(self.output_path)}")
+
+class GalleryGenerator(DashboardGenerator):
+    def generate(self, data_groups):
+        """
+        data_groups: list of dicts:
+        {
+            'reference': {'macros': [macros], 'edges': {type: [[u,v], ...]}},
+            'samples': [{'macros': [macros], 'edges': {type: [[u,v], ...]}}, ...]
+        }
+        """
+        canvas_width = Config.CANVAS_WIDTH
+        canvas_height = Config.CANVAS_HEIGHT
+        
+        data_json = json.dumps(data_groups)
+        
+        html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MXP Refiner Data Gallery</title>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }}
+        .group {{ margin-bottom: 40px; border-bottom: 1px solid #ccc; padding-bottom: 20px; }}
+        .row {{ display: flex; flex-wrap: wrap; gap: 10px; }}
+        .cell {{ display: flex; flex-direction: column; align-items: center; }}
+        canvas {{ border: 1px solid #333; background-color: #f0f0f0; }}
+        h3 {{ margin: 5px 0; font-size: 14px; color: #555; }}
+        .legend {{ margin-bottom: 20px; padding: 10px; background: #fff; border: 1px solid #ddd; }}
+        .legend span {{ margin-right: 15px; font-size: 12px; }}
+        .dot {{ height: 10px; width: 10px; display: inline-block; margin-right: 5px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Synthetic Data Gallery</h1>
+        <div class="legend">
+            <strong>Edges:</strong>
+            <span><span class="dot" style="background-color: rgba(40, 167, 69, 0.4);"></span>Physical (Prox)</span>
+            <span><span class="dot" style="background-color: rgba(0, 123, 255, 0.4);"></span>Alignment</span>
+            <span><span class="dot" style="background-color: rgba(220, 53, 69, 0.2);"></span>Logic</span>
+        </div>
+        <div id="gallery"></div>
+    </div>
+
+    <script>
+        const dataGroups = {data_json};
+        const canvasW = {int(canvas_width/4)}; // Smaller thumbnails
+        const canvasH = {int(canvas_height/4)};
+        const scale = 0.25;
+        
+        const galleryDiv = document.getElementById('gallery');
+        
+        function drawScene(ctx, data) {{
+            const macros = data.macros;
+            const edges = data.edges || {{}};
+            
+            ctx.clearRect(0, 0, canvasW, canvasH);
+            ctx.strokeStyle = '#999';
+            ctx.strokeRect(0, 0, canvasW, canvasH);
+            
+            // Helper to get center
+            const getCenter = (idx) => {{
+                const m = macros[idx];
+                if (!m) return {{x:0, y:0}};
+                return {{
+                    x: (m.x + m.w / 2) * scale,
+                    y: (m.y + m.h / 2) * scale
+                }};
+            }};
+            
+            // Draw Edges first (background)
+            
+            // Logic (Red, very faint)
+            if (edges['logic']) {{
+                ctx.strokeStyle = 'rgba(220, 53, 69, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                edges['logic'].forEach(e => {{
+                    const p1 = getCenter(e[0]);
+                    const p2 = getCenter(e[1]);
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                }});
+                ctx.stroke();
+            }}
+            
+            // Physical (Green, faint)
+            if (edges['phys']) {{
+                ctx.strokeStyle = 'rgba(40, 167, 69, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                edges['phys'].forEach(e => {{
+                    const p1 = getCenter(e[0]);
+                    const p2 = getCenter(e[1]);
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                }});
+                ctx.stroke();
+            }}
+            
+            // Align (Blue)
+            if (edges['align']) {{
+                ctx.strokeStyle = 'rgba(0, 123, 255, 0.6)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                edges['align'].forEach(e => {{
+                    const p1 = getCenter(e[0]);
+                    const p2 = getCenter(e[1]);
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                }});
+                ctx.stroke();
+            }}
+            
+            // Draw Macros
+            macros.forEach(macro => {{
+                const x = macro.x * scale;
+                const y = macro.y * scale;
+                const w = macro.w * scale;
+                const h = macro.h * scale;
+                
+                ctx.fillStyle = 'rgba(240, 240, 240, 0.8)'; // More opaque to hide lines behind
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                
+                ctx.fillRect(x, y, w, h);
+                ctx.strokeRect(x, y, w, h);
+                
+                // Draw ID
+                ctx.fillStyle = '#000';
+                ctx.font = '8px Arial';
+                ctx.fillText(macro.id, x + 2, y + 8);
+            }});
+        }}
+        
+        dataGroups.forEach((group, index) => {{
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'group';
+            
+            const title = document.createElement('h2');
+            title.innerText = `Group ${{index + 1}}`;
+            groupDiv.appendChild(title);
+            
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'row';
+            
+            // Reference
+            const refDiv = document.createElement('div');
+            refDiv.className = 'cell';
+            const refTitle = document.createElement('h3');
+            refTitle.innerText = 'Reference (Aligned)';
+            const refCanvas = document.createElement('canvas');
+            refCanvas.width = canvasW;
+            refCanvas.height = canvasH;
+            drawScene(refCanvas.getContext('2d'), group.reference);
+            refDiv.appendChild(refTitle);
+            refDiv.appendChild(refCanvas);
+            rowDiv.appendChild(refDiv);
+            
+            // Samples
+            group.samples.forEach((sample, sIndex) => {{
+                const sDiv = document.createElement('div');
+                sDiv.className = 'cell';
+                const sTitle = document.createElement('h3');
+                sTitle.innerText = `Sample ${{sIndex + 1}} (Disturbed)`;
+                const sCanvas = document.createElement('canvas');
+                sCanvas.width = canvasW;
+                sCanvas.height = canvasH;
+                drawScene(sCanvas.getContext('2d'), sample);
+                sDiv.appendChild(sTitle);
+                sDiv.appendChild(sCanvas);
+                rowDiv.appendChild(sDiv);
+            }});
+            
+            groupDiv.appendChild(rowDiv);
+            galleryDiv.appendChild(groupDiv);
+        }});
+    </script>
+</body>
+</html>
+        """
+        
+        with open(self.output_path, "w") as f:
+            f.write(html_content)
+        
+        print(f"Gallery generated at: {os.path.abspath(self.output_path)}")

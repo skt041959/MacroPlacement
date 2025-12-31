@@ -8,7 +8,7 @@ class Config:
     # 构图阈值
     ALIGN_DIST_THRESH = 50.0   # 对齐边的最大距离
     ALIGN_SIZE_THRESH = 5.0    # 尺寸相似度容差
-    PHYS_EDGE_CUTOFF = 300.0   # Delaunay 边的修剪距离
+    PHYS_EDGE_CUTOFF = 1500.0   # Delaunay 边的修剪距离
     
     # 模型参数
     HIDDEN_DIM = 64
@@ -22,5 +22,7 @@ class Config:
     
     # 数据生成参数
     SEED = 42
-    GENERATION_MODE = 'random' # 'random', 'grid', 'rows'
-    GRID_COLS = 10
+    GENERATION_MODE = 'clustered' # 'random', 'grid', 'rows', 'clustered'
+    GRID_COLS = 5
+    NOISE_LEVEL = 20.0 # Max displacement in units
+    
