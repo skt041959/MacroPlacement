@@ -12,6 +12,6 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Supervised Training Pipeline' (Protocol in workflow.md)
 
 ## Phase 3: Evaluation & Visualization
-- [ ] Task: Implement an inference script to generate restored layouts.
+- [x] Task: Implement an inference script to generate restored layouts. (b4b8f09)
 - [ ] Task: Update the visualizer to show Reference, Disturbed, and Restored layouts side-by-side.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Evaluation & Visualization' (Protocol in workflow.md)
