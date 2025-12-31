@@ -13,5 +13,5 @@
 
 ## Phase 3: Evaluation & Visualization
 - [x] Task: Implement an inference script to generate restored layouts. (b4b8f09)
-- [ ] Task: Update the visualizer to show Reference, Disturbed, and Restored layouts side-by-side.
+- [x] Task: Update the visualizer to show Reference, Disturbed, and Restored layouts side-by-side. (f0651f0)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Evaluation & Visualization' (Protocol in workflow.md)
