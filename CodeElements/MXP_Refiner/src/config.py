@@ -25,4 +25,9 @@ class Config:
     GENERATION_MODE = 'clustered' # 'random', 'grid', 'rows', 'clustered'
     GRID_COLS = 5
     NOISE_LEVEL = 20.0 # Max displacement in units
+
+    # 训练参数 (Restorer)
+    RESTORER_EPOCHS = 100
+    RESTORER_BATCH_SIZE = 1
+    RESTORER_LR = 1e-3
     
