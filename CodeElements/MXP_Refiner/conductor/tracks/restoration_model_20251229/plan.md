@@ -5,7 +5,7 @@
 - [x] Task: Integrate the model with the existing HeteroGATRefiner logic where applicable. (572b635)
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Model Architecture' (Protocol in workflow.md) (24268a2)
 
-## Phase 2: Supervised Training Pipeline
+## Phase 2: Supervised Training Pipeline [checkpoint: 0d2cdb8]
 - [x] Task: Implement a dataset loader that wraps SyntheticDataGenerator for PyTorch training. (43b44f4)
 - [x] Task: Write the supervised training script (src/train_restorer.py) with MSE loss. (7cf363e)
 - [x] Task: Add alignment-aware loss terms to the training objective. (7cf363e)
