@@ -2,7 +2,7 @@
 
 ## Phase 1: Model Architecture
 - [x] Task: Implement the FloorplanRestorer class with a GNN Encoder and a Sequence Decoder. (572b635)
-- [ ] Task: Integrate the model with the existing HeteroGATRefiner logic where applicable.
+- [x] Task: Integrate the model with the existing HeteroGATRefiner logic where applicable. (572b635)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Model Architecture' (Protocol in workflow.md)
 
 ## Phase 2: Supervised Training Pipeline
