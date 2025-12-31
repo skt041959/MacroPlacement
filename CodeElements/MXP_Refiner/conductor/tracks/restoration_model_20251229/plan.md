@@ -1,9 +1,9 @@
 # Plan: Graph-to-Sequence Restoration Model
 
-## Phase 1: Model Architecture
+## Phase 1: Model Architecture [checkpoint: 24268a2]
 - [x] Task: Implement the FloorplanRestorer class with a GNN Encoder and a Sequence Decoder. (572b635)
 - [x] Task: Integrate the model with the existing HeteroGATRefiner logic where applicable. (572b635)
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Model Architecture' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Model Architecture' (Protocol in workflow.md) (24268a2)
 
 ## Phase 2: Supervised Training Pipeline
 - [ ] Task: Implement a dataset loader that wraps SyntheticDataGenerator for PyTorch training.
