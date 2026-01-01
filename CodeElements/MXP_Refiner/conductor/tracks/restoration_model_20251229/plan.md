@@ -11,7 +11,7 @@
 - [x] Task: Add alignment-aware loss terms to the training objective. (7cf363e)
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Supervised Training Pipeline' (Protocol in workflow.md)
 
-## Phase 3: Evaluation & Visualization
+## Phase 3: Evaluation & Visualization [checkpoint: 8bafe16]
 - [x] Task: Implement an inference script to generate restored layouts. (b4b8f09)
 - [x] Task: Update the visualizer to show Reference, Disturbed, and Restored layouts side-by-side. (f0651f0)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Evaluation & Visualization' (Protocol in workflow.md)
