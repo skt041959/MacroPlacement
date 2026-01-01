@@ -27,24 +27,26 @@ def train_restorer():
     ).to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=Config.RESTORER_LR)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=Config.RESTORER_EPOCHS)
     criterion = nn.MSELoss()
 
     model.train()
     
     # History for tracking
-    history = {'loss': [], 'mse': [], 'align': []}
+    history = {'loss': [], 'mse': [], 'align': [], 'lr': []}
     
     # Open log file
     log_file = open("training.log", "w", newline='')
     writer = csv.writer(log_file)
-    writer.writerow(["Epoch", "Loss", "MSE", "Align"])
+    writer.writerow(["Epoch", "Loss", "MSE", "Align", "LR"])
 
     for epoch in range(Config.RESTORER_EPOCHS):
         epoch_loss = 0
         epoch_mse = 0
         epoch_align = 0
+        current_lr = optimizer.param_groups[0]['lr']
         
-        pbar = tqdm(loader, desc=f"Epoch {epoch+1}/{Config.RESTORER_EPOCHS}")
+        pbar = tqdm(loader, desc=f"Epoch {epoch+1}/{Config.RESTORER_EPOCHS} (LR: {current_lr:.6f})")
         
         for data in pbar:
             data = data.to(device)
@@ -94,6 +96,9 @@ def train_restorer():
             
             pbar.set_postfix({'Loss': f"{loss.item():.6f}", 'MSE': f"{mse_loss.item():.6f}"})
             
+        # Step the scheduler
+        scheduler.step()
+        
         avg_loss = epoch_loss / len(loader)
         avg_mse = epoch_mse / len(loader)
         avg_align = epoch_align / len(loader)
@@ -101,8 +106,9 @@ def train_restorer():
         history['loss'].append(avg_loss)
         history['mse'].append(avg_mse)
         history['align'].append(avg_align)
+        history['lr'].append(current_lr)
         
-        writer.writerow([epoch+1, avg_loss, avg_mse, avg_align])
+        writer.writerow([epoch+1, avg_loss, avg_mse, avg_align, current_lr])
         log_file.flush()
 
     log_file.close()

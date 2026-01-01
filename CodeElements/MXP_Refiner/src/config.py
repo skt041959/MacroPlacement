@@ -11,9 +11,9 @@ class Config:
     PHYS_EDGE_CUTOFF = 1500.0   # Delaunay 边的修剪距离
     
     # 模型参数
-    HIDDEN_DIM = 64
+    HIDDEN_DIM = 128
     NUM_HEADS = 4
-    NUM_LAYERS = 3
+    NUM_LAYERS = 4
     ACTION_DIM = 7  # [NoOp, Up, Down, Left, Right, Snap_X, Snap_Y]
     
     # RL 参数
@@ -31,5 +31,5 @@ class Config:
     # 训练参数 (Restorer)
     RESTORER_EPOCHS = 100
     RESTORER_BATCH_SIZE = 32
-    RESTORER_LR = 1e-3
+    RESTORER_LR = 5e-4
     
