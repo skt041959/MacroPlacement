@@ -21,7 +21,6 @@ class SyntheticDataGenerator:
 
         if mode == 'random':
             macros = self._generate_random(count, **kwargs)
-            # Random has no "aligned" structure
             return macros, self._perturb_macros(macros, actual_noise)
         
         elif mode == 'grid':
@@ -37,89 +36,6 @@ class SyntheticDataGenerator:
             
         disturbed = self._perturb_macros(aligned, actual_noise)
         return aligned, disturbed
-
-    def _generate_mixed(self, count, **kwargs):
-        """
-        Combines random, grid, and clustered generation.
-        """
-        modes = ['random', 'grid', 'clustered']
-        # Randomly choose a sub-mode for this call, OR split count into chunks?
-        # Let's split count into chunks and use different strategies for each chunk.
-        
-        macros = []
-        remaining = count
-        
-        # Determine splits (e.g., 2 or 3 splits)
-        num_splits = np.random.randint(2, 4)
-        
-        splits = []
-        for i in range(num_splits - 1):
-            if remaining <= 0: break
-            split_count = np.random.randint(1, remaining)
-            splits.append(split_count)
-            remaining -= split_count
-        if remaining > 0:
-            splits.append(remaining)
-            
-        current_x, current_y = 50, 50
-        
-        for split_count in splits:
-            sub_mode = np.random.choice(modes)
-            
-            # Generate sub-group
-            if sub_mode == 'random':
-                # Localize random generation to a region?
-                # _generate_random distributes over whole canvas.
-                # Let's just generate and then shift?
-                # Or simply call existing methods and let them place.
-                # Problem: They might overlap.
-                # _generate_random uses full canvas. _generate_grid/clustered use localized cursor.
-                
-                # For mixed, let's just delegate to _generate_clustered for structure
-                # and maybe add some random scatter.
-                
-                # Simplification: 'Mixed' just randomly picks ONE strategy for the whole batch
-                # OR actually mixes them.
-                # Let's pick one strategy for the whole batch for now to keep it valid (non-overlapping).
-                # Mixing different logic in one canvas requires collision detection which is complex.
-                
-                # To truly mix:
-                # We can generate separate groups and try to place them.
-                # But since we don't have a placer, let's stick to:
-                # Randomly picking one of the structured modes per call is effectively "mixed" over a dataset.
-                
-                # Wait, "Mixed generation mode (combining clusters and random placements)"
-                # Let's generate a clustered backbone and then add some random macros.
-                
-                sub_mode = 'clustered' # Base
-            
-            if sub_mode == 'clustered':
-                sub_macros = self._generate_clustered(split_count, cluster_count=np.random.randint(1, 3))
-            elif sub_mode == 'grid':
-                sub_macros = self._generate_grid(split_count, grid_cols=int(np.sqrt(split_count)))
-            else: # random
-                sub_macros = self._generate_random(split_count)
-                
-            # Shift sub_macros to avoid overlap?
-            # Existing methods restart at 50,50.
-            # This implementation of mixed is tricky without a packer.
-            
-            # Revised approach:
-            # Randomly select a mode for the ENTIRE layout.
-            # This increases diversity across the dataset.
-            pass
-
-        # To support "Mixed" as a single mode that varies per call:
-        selected_mode = np.random.choice(['grid', 'rows', 'clustered']) 
-        # Exclude 'random' from base alignment if we want ground truth to be aligned.
-        
-        if selected_mode == 'grid':
-            return self._generate_grid(count, **kwargs)
-        elif selected_mode == 'rows':
-            return self._generate_rows(count, **kwargs)
-        elif selected_mode == 'clustered':
-            return self._generate_clustered(count, **kwargs)
-        return []
 
     def _generate_random(self, count, **kwargs):
         macros = []
@@ -149,22 +65,14 @@ class SyntheticDataGenerator:
         for i in range(count):
             w = 40 + np.random.rand() * 60
             h = 40 + np.random.rand() * 60
-            
             row = i // grid_cols
             col = i % grid_cols
-            
             cell_x = start_x + col * (cell_w + spacing)
             cell_y = start_y + row * (cell_h + spacing)
-            
             x = cell_x + (cell_w - w) / 2
             y = cell_y + (cell_h - h) / 2
-            
             macros.append({
-                'id': i,
-                'x': float(x),
-                'y': float(y),
-                'w': float(w),
-                'h': float(h)
+                'id': i, 'x': float(x), 'y': float(y), 'w': float(w), 'h': float(h)
             })
         return macros
 
@@ -174,23 +82,17 @@ class SyntheticDataGenerator:
         spacing = 20
         start_x, start_y = 50, 50
         max_h_in_row = 100
-        
         current_y = start_y
         for r in range(rows):
             current_x = start_x
             for c in range(per_row):
                 idx = len(macros)
                 if idx >= count: break
-                
                 w = 40 + np.random.rand() * 60
                 h = 40 + np.random.rand() * 60
-                
                 macros.append({
-                    'id': idx,
-                    'x': float(current_x),
-                    'y': float(current_y + (max_h_in_row - h) / 2),
-                    'w': float(w),
-                    'h': float(h)
+                    'id': idx, 'x': float(current_x), 'y': float(current_y + (max_h_in_row - h) / 2),
+                    'w': float(w), 'h': float(h)
                 })
                 current_x += w + spacing
             current_y += max_h_in_row + spacing + 20
@@ -203,22 +105,18 @@ class SyntheticDataGenerator:
         max_h_in_row = 0
         spacing = 40
         cluster_spacing = 80
-        
         for k in range(cluster_count):
             w = 40 + np.random.rand() * 60
             h = 40 + np.random.rand() * 60
             cluster_cols = int(np.ceil(np.sqrt(per_cluster)))
             cluster_rows = int(np.ceil(per_cluster / cluster_cols))
-            
             cluster_width = cluster_cols * (w + spacing)
             if current_x + cluster_width > self.canvas_width:
                 current_x = 50
                 current_y += max_h_in_row + cluster_spacing
                 max_h_in_row = 0
-            
             cluster_height = cluster_rows * (h + spacing)
             max_h_in_row = max(max_h_in_row, cluster_height)
-            
             for i in range(per_cluster):
                 if len(macros) >= count: break
                 row = i // cluster_cols
@@ -226,23 +124,102 @@ class SyntheticDataGenerator:
                 x = current_x + col * (w + spacing)
                 y = current_y + row * (h + spacing)
                 macros.append({
-                    'id': len(macros),
-                    'x': float(x),
-                    'y': float(y),
-                    'w': float(w),
-                    'h': float(h)
+                    'id': len(macros), 'x': float(x), 'y': float(y), 'w': float(w), 'h': float(h)
                 })
             current_x += cluster_width + cluster_spacing
         return macros
 
+    def _generate_mixed(self, count, **kwargs):
+        """
+        Clarified Mixed Mode:
+        - Divide 'count' macros into multiple clusters (Dynamic Count).
+        - Use a small pool of 2 distinct macro sizes.
+        - Each cluster is aligned in a variable grid shape.
+        - All macros are structured within clusters.
+        """
+        num_clusters = np.random.randint(2, 5)
+        
+        # 1. Split count into clusters
+        cluster_counts = []
+        remaining = count
+        for i in range(num_clusters - 1):
+            if remaining <= 1: break
+            # Ensure at least 1 macro per cluster, but try to keep them decent sized
+            upper = max(2, remaining // 2)
+            c = np.random.randint(1, upper + 1)
+            cluster_counts.append(c)
+            remaining -= c
+        if remaining > 0:
+            cluster_counts.append(remaining)
+        
+        # 2. Define two distinct macro sizes for the pool
+        size_pool = [
+            (40 + np.random.rand() * 20, 40 + np.random.rand() * 20), # Size Type 1 (Small)
+            (70 + np.random.rand() * 30, 70 + np.random.rand() * 30)  # Size Type 2 (Large)
+        ]
+        
+        macros = []
+        current_x, current_y = 50, 50
+        max_h_in_row = 0
+        spacing = 15
+        cluster_spacing = 50
+        
+        for c_count in cluster_counts:
+            # Pick a size from pool
+            w, h = size_pool[np.random.randint(0, len(size_pool))]
+            
+            # 3. Determine grid shape (randomly biased towards square-ish)
+            ideal_cols = int(np.ceil(np.sqrt(c_count)))
+            # Add some variation to the shape
+            cols = np.random.randint(max(1, ideal_cols - 1), ideal_cols + 2)
+            rows = int(np.ceil(c_count / cols))
+            
+            cluster_w = cols * w + (cols - 1) * spacing
+            cluster_h = rows * h + (rows - 1) * spacing
+            
+            # 4. Simple row-based packing for clusters on the canvas
+            if current_x + cluster_w > self.canvas_width - 50:
+                current_x = 50
+                current_y += max_h_in_row + cluster_spacing
+                max_h_in_row = 0
+            
+            # Stop if we run out of vertical space
+            if current_y + cluster_h > self.canvas_height - 50:
+                break
+                
+            # Place macros in this cluster
+            for i in range(c_count):
+                r = i // cols
+                c = i % cols
+                
+                macros.append({
+                    'id': len(macros),
+                    'x': float(current_x + c * (w + spacing)),
+                    'y': float(current_y + r * (h + spacing)),
+                    'w': float(w),
+                    'h': float(h)
+                })
+            
+            max_h_in_row = max(max_h_in_row, cluster_h)
+            current_x += cluster_w + cluster_spacing
+            
+        return macros
+
     def _perturb_macros(self, macros, noise_level):
-        if noise_level <= 0:
+        # Handle range
+        if isinstance(noise_level, (list, tuple)):
+            actual_noise = np.random.uniform(noise_level[0], noise_level[1])
+        else:
+            actual_noise = noise_level
+
+        if actual_noise <= 0:
             return [m.copy() for m in macros]
+            
         disturbed = []
         for m in macros:
             new_m = m.copy()
-            dx = (np.random.rand() - 0.5) * 2 * noise_level
-            dy = (np.random.rand() - 0.5) * 2 * noise_level
+            dx = (np.random.rand() - 0.5) * 2 * actual_noise
+            dy = (np.random.rand() - 0.5) * 2 * actual_noise
             new_m['x'] += dx
             new_m['y'] += dy
             new_m['x'] = np.clip(new_m['x'], 0, self.canvas_width - new_m['w'])

@@ -47,11 +47,16 @@ def inspect_data():
     data_groups = []
     
     # Generate a few independent groups (Reference layouts)
-    for g in range(3):
+    for g in range(10):
+        # Vary seed for each group to ensure diversity
+        group_generator = SyntheticDataGenerator(seed=Config.SEED + g, 
+                                               canvas_width=Config.CANVAS_WIDTH, 
+                                               canvas_height=Config.CANVAS_HEIGHT)
+        
         # Generate Reference
-        aligned, _ = generator.generate(count=count, 
+        aligned, _ = group_generator.generate(count=count, 
                                       mode=Config.GENERATION_MODE, 
-                                      cluster_count=2,
+                                      cluster_count=np.random.randint(2, 5),
                                       noise_level=0.0)
         
         # Build graph for reference
@@ -60,9 +65,9 @@ def inspect_data():
         # Generate Multiple Disturbed Samples from this Reference
         samples = []
         restored_list = []
-        for s in range(2): # 2 samples per group for cleaner gallery
+        for s in range(2): # 2 samples per group
             # We use the internal helper to just perturb the existing reference
-            disturbed = generator._perturb_macros(aligned, noise_level=Config.NOISE_LEVEL)
+            disturbed = group_generator._perturb_macros(aligned, noise_level=Config.NOISE_LEVEL)
             
             # Restore
             restored = restorer.restore(disturbed)
