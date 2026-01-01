@@ -6,7 +6,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Enhanced Data Generation' (Protocol in workflow.md) (7e79d9d)
 
 ## Phase 2: Architecture & Training Optimization
-- [ ] Task: Implement Learning Rate Scheduler in src/train_restorer.py.
+- [~] Task: Implement Learning Rate Scheduler in `src/train_restorer.py`.
 - [ ] Task: Tune model hyperparameters in src/config.py (e.g., Hidden Dim 128, 4 Layers).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Architecture & Training Optimization' (Protocol in workflow.md)
 
