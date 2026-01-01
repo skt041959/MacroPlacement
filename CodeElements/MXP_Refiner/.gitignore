@@ -6,3 +6,9 @@ dashboard.html
 .vscode/
 .idea/
 .DS_Store
+
+data/
+*.html
+*.svg
+*.log
+*.png

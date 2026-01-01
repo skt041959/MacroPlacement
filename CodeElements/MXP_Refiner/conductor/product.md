@@ -9,7 +9,7 @@ The MXP Refiner aims to provide a high-performance, ML-driven alternative for ma
 ## Implementation Strategy
 The development will follow a phased approach:
 1.  **Phase 1: Synthetic Data Generation (Completed):** Established a robust synthetic data generator (`SyntheticDataGenerator`) capable of creating aligned clusters of macros and perturbing them to simulate initial placement states. Implemented geometric kernels for overlap detection and alignment scoring.
-2.  **Phase 2: Graph-to-Sequence Restoration Model:** Develop a Graph-to-Sequence model (Encoder-Decoder) to restore perturbed floorplans to their aligned "ground truth" state. This serves as a supervised learning precursor to full RL-driven optimization.
+2.  **Phase 2: Graph-to-Sequence Restoration Model (Completed):** Developed a Graph-to-Sequence model (`FloorplanRestorer`) using a HeteroGAT Encoder and GRU Decoder. Implemented a supervised training pipeline with a combined MSE and Alignment loss, trained on 100,000 synthetic samples.
 3.  **Phase 3: RL-Driven Optimization:** Integrate Reinforcement Learning (PPO/A2C) to optimize for wirelength (HPWL) and complex placement objectives using real-world connectivity constraints.
 4.  **Phase 4: Integration & PPA Validation:** Validate final layouts with commercial EDA flows.
 

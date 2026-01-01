@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import HeteroConv, GATv2Conv, Linear
+from torch.nn import TransformerDecoder, TransformerDecoderLayer
 
 class HeteroGATEncoder(nn.Module):
     def __init__(self, hidden_dim, num_layers, num_heads):
@@ -89,5 +90,50 @@ class FloorplanRestorer(nn.Module):
         
         # Restored coordinates
         coords = self.output_layer(output)
+        
+        return coords
+
+class GraphToSeqRestorer(nn.Module):
+    def __init__(self, hidden_dim, num_layers, num_heads, dropout=0.1):
+        super().__init__()
+        self.encoder = HeteroGATEncoder(hidden_dim, num_layers, num_heads)
+        
+        # Non-Autoregressive Transformer Configuration
+        # We use the GNN embeddings as BOTH 'memory' (graph context) and 'tgt' (initial query)
+        decoder_layer = TransformerDecoderLayer(
+            d_model=hidden_dim,
+            nhead=num_heads,
+            dim_feedforward=hidden_dim * 4,
+            dropout=dropout,
+            batch_first=True
+        )
+        self.decoder = TransformerDecoder(decoder_layer, num_layers=3) # Independent layers from GNN if desired
+        
+        self.output_layer = nn.Linear(hidden_dim, 2) # (x, y)
+
+    def forward(self, x_dict, edge_index_dict, edge_attr_dict):
+        # 1. Encode Graph Structure
+        # node_embed shape: [N, hidden_dim]
+        node_embed = self.encoder(x_dict, edge_index_dict, edge_attr_dict)
+        
+        # 2. Prepare for Transformer
+        # TransformerDecoder requires batch dimension for batch_first=True: [Batch, Seq, Dim]
+        # In this single-graph setups, Batch=1.
+        # Target (Queries) = Node Embeddings (Simulating "refinement" of the state)
+        # Memory (Keys/Vals) = Node Embeddings (Access to graph topology info)
+        
+        # [N, D] -> [1, N, D]
+        h = node_embed.unsqueeze(0)
+        
+        # 3. Parallel Decode (Non-Autoregressive)
+        # No causal mask is used. All nodes attend to all other nodes.
+        # tgt=h, memory=h
+        out_seq = self.decoder(tgt=h, memory=h)
+        
+        # [1, N, D] -> [N, D]
+        out_seq = out_seq.squeeze(0)
+        
+        # 4. Coordinate Projection
+        coords = self.output_layer(out_seq)
         
         return coords
