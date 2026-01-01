@@ -1,9 +1,9 @@
 # Plan: Restoration Model Fine-tuning & Data Diversity
 
-## Phase 1: Enhanced Data Generation
+## Phase 1: Enhanced Data Generation [checkpoint: 7e79d9d]
 - [x] Task: Implement 'Mixed' generation mode in `SyntheticDataGenerator`. (7ee60c0)
 - [~] Task: Update `SyntheticDataGenerator` to support variable noise levels (sampled per layout).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Enhanced Data Generation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Enhanced Data Generation' (Protocol in workflow.md) (7e79d9d)
 
 ## Phase 2: Architecture & Training Optimization
 - [ ] Task: Implement Learning Rate Scheduler in src/train_restorer.py.
