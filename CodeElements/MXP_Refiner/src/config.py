@@ -22,11 +22,11 @@ class Config:
     
     # 数据生成参数
     SEED = 42
-    GENERATION_MODE = 'clustered' # 'random', 'grid', 'rows', 'clustered'
+    GENERATION_MODE = 'mixed' # 'random', 'grid', 'rows', 'clustered', 'mixed'
     GRID_COLS = 5
-    NOISE_LEVEL = 20.0 # Max displacement in units
-    NUM_TRAIN_SAMPLES = 100000
-    DATASET_PATH = 'data/restoration_dataset.pt'
+    NOISE_LEVEL = (5.0, 40.0) # Range for displacement
+    NUM_TRAIN_SAMPLES = 10000
+    DATASET_PATH = 'data/restoration_dataset_10k_mixed.pt'
 
     # 训练参数 (Restorer)
     RESTORER_EPOCHS = 100

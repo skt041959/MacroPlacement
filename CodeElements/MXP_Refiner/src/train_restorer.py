@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import os
 
 from config import Config
-from model import FloorplanRestorer
+from model import GraphToSeqRestorer
 from dataset import RestorationDataset
 
 def train_restorer():
@@ -20,7 +20,7 @@ def train_restorer():
     loader = DataLoader(dataset, batch_size=Config.RESTORER_BATCH_SIZE, shuffle=True)
 
     # 2. Model, Optimizer, Loss
-    model = FloorplanRestorer(
+    model = GraphToSeqRestorer(
         hidden_dim=Config.HIDDEN_DIM, 
         num_layers=Config.NUM_LAYERS, 
         num_heads=Config.NUM_HEADS

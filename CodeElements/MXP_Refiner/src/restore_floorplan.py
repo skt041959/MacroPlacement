@@ -1,13 +1,13 @@
 import torch
 import numpy as np
 from config import Config
-from model import FloorplanRestorer
+from model import GraphToSeqRestorer
 from data_builder import GraphBuilder
 
 class FloorplanRestorationInference:
     def __init__(self, model_path="restorer_model.pth"):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.model = FloorplanRestorer(
+        self.model = GraphToSeqRestorer(
             hidden_dim=Config.HIDDEN_DIM, 
             num_layers=Config.NUM_LAYERS, 
             num_heads=Config.NUM_HEADS

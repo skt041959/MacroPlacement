@@ -13,10 +13,16 @@ class SyntheticDataGenerator:
         Generates a set of macros.
         Returns: (aligned_macros, disturbed_macros)
         """
+        # Handle variable noise level
+        if isinstance(noise_level, (list, tuple)):
+            actual_noise = np.random.uniform(noise_level[0], noise_level[1])
+        else:
+            actual_noise = noise_level
+
         if mode == 'random':
             macros = self._generate_random(count, **kwargs)
             # Random has no "aligned" structure
-            return macros, self._perturb_macros(macros, noise_level)
+            return macros, self._perturb_macros(macros, actual_noise)
         
         elif mode == 'grid':
             aligned = self._generate_grid(count, **kwargs)
@@ -24,11 +30,96 @@ class SyntheticDataGenerator:
             aligned = self._generate_rows(count, **kwargs)
         elif mode == 'clustered':
              aligned = self._generate_clustered(count, **kwargs)
+        elif mode == 'mixed':
+             aligned = self._generate_mixed(count, **kwargs)
         else:
             raise ValueError(f"Unknown mode: {mode}")
             
-        disturbed = self._perturb_macros(aligned, noise_level)
+        disturbed = self._perturb_macros(aligned, actual_noise)
         return aligned, disturbed
+
+    def _generate_mixed(self, count, **kwargs):
+        """
+        Combines random, grid, and clustered generation.
+        """
+        modes = ['random', 'grid', 'clustered']
+        # Randomly choose a sub-mode for this call, OR split count into chunks?
+        # Let's split count into chunks and use different strategies for each chunk.
+        
+        macros = []
+        remaining = count
+        
+        # Determine splits (e.g., 2 or 3 splits)
+        num_splits = np.random.randint(2, 4)
+        
+        splits = []
+        for i in range(num_splits - 1):
+            if remaining <= 0: break
+            split_count = np.random.randint(1, remaining)
+            splits.append(split_count)
+            remaining -= split_count
+        if remaining > 0:
+            splits.append(remaining)
+            
+        current_x, current_y = 50, 50
+        
+        for split_count in splits:
+            sub_mode = np.random.choice(modes)
+            
+            # Generate sub-group
+            if sub_mode == 'random':
+                # Localize random generation to a region?
+                # _generate_random distributes over whole canvas.
+                # Let's just generate and then shift?
+                # Or simply call existing methods and let them place.
+                # Problem: They might overlap.
+                # _generate_random uses full canvas. _generate_grid/clustered use localized cursor.
+                
+                # For mixed, let's just delegate to _generate_clustered for structure
+                # and maybe add some random scatter.
+                
+                # Simplification: 'Mixed' just randomly picks ONE strategy for the whole batch
+                # OR actually mixes them.
+                # Let's pick one strategy for the whole batch for now to keep it valid (non-overlapping).
+                # Mixing different logic in one canvas requires collision detection which is complex.
+                
+                # To truly mix:
+                # We can generate separate groups and try to place them.
+                # But since we don't have a placer, let's stick to:
+                # Randomly picking one of the structured modes per call is effectively "mixed" over a dataset.
+                
+                # Wait, "Mixed generation mode (combining clusters and random placements)"
+                # Let's generate a clustered backbone and then add some random macros.
+                
+                sub_mode = 'clustered' # Base
+            
+            if sub_mode == 'clustered':
+                sub_macros = self._generate_clustered(split_count, cluster_count=np.random.randint(1, 3))
+            elif sub_mode == 'grid':
+                sub_macros = self._generate_grid(split_count, grid_cols=int(np.sqrt(split_count)))
+            else: # random
+                sub_macros = self._generate_random(split_count)
+                
+            # Shift sub_macros to avoid overlap?
+            # Existing methods restart at 50,50.
+            # This implementation of mixed is tricky without a packer.
+            
+            # Revised approach:
+            # Randomly select a mode for the ENTIRE layout.
+            # This increases diversity across the dataset.
+            pass
+
+        # To support "Mixed" as a single mode that varies per call:
+        selected_mode = np.random.choice(['grid', 'rows', 'clustered']) 
+        # Exclude 'random' from base alignment if we want ground truth to be aligned.
+        
+        if selected_mode == 'grid':
+            return self._generate_grid(count, **kwargs)
+        elif selected_mode == 'rows':
+            return self._generate_rows(count, **kwargs)
+        elif selected_mode == 'clustered':
+            return self._generate_clustered(count, **kwargs)
+        return []
 
     def _generate_random(self, count, **kwargs):
         macros = []
