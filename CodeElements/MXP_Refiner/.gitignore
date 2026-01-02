@@ -9,6 +9,7 @@ dashboard.html
 
 data/
 *.html
+!src/templates/*.html
 *.svg
 *.log
 *.png
