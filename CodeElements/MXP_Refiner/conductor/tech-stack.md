@@ -16,3 +16,6 @@
 - **Protocol Buffers (Protobuf)**: Used for efficient, structured serialization of placement data when importing from industry-standard formats (LEF/DEF).
 - **Matplotlib**: Generates static training metrics and visualization snapshots.
 - **HTML5/JS (Canvas)**: Powers the interactive refinement dashboard for real-time playback of macro movements.
+
+## Web Server
+- **Flask**: Lightweight Python web framework used for serving the dataset viewer and visualization dashboard. [Added 2026-01-02]
