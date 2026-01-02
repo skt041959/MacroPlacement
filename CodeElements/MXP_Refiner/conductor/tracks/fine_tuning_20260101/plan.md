@@ -11,6 +11,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Architecture & Training Optimization' (Protocol in workflow.md) (106cba6)
 
 ## Phase 3: Advanced Evaluation Metrics
-- [ ] Task: Implement Alignment Recovery Score in src/geometry.py.
-- [ ] Task: Update src/evaluate_model.py to compute and report metrics (MSE, Overlap, Alignment).
+- [x] Task: Implement Alignment Recovery Score in `src/geometry.py`. (a53188a)
+- [x] Task: Update `src/evaluate_model.py` to compute and report metrics (MSE, Overlap, Alignment). (494484a)
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Advanced Evaluation Metrics' (Protocol in workflow.md)
