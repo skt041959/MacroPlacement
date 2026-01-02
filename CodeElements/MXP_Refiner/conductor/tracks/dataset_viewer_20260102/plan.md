@@ -5,7 +5,7 @@
     - [ ] Sub-task: Load `restorer_model.pth` and `data/val_dataset.pt`.
     - [ ] Sub-task: Run inference on the entire validation set.
     - [ ] Sub-task: Save combined results (Reference, Disturbed, Restored, Metrics) to `data/val_results.pt`.
-- [ ] Task: Setup Flask Backend (`src/viewer_server.py`)
+- [x] Task: Setup Flask Backend (`src/viewer_server.py`) (d581976)
     - [ ] Sub-task: Initialize Flask app and define static file serving.
     - [ ] Sub-task: Implement `DataLoader` class to handle `val_results.pt`.
     - [ ] Sub-task: Create API `/api/samples` with pagination (page, limit).
