@@ -1,16 +1,16 @@
 # Implementation Plan - Dataset Viewer
 
-## Phase 1: Data Preparation & Backend Setup
+## Phase 1: Data Preparation & Backend Setup [checkpoint: 8a37b62]
 - [x] Task: Create `src/generate_val_results.py` (a74bfad)
-    - [ ] Sub-task: Load `restorer_model.pth` and `data/val_dataset.pt`.
-    - [ ] Sub-task: Run inference on the entire validation set.
-    - [ ] Sub-task: Save combined results (Reference, Disturbed, Restored, Metrics) to `data/val_results.pt`.
+    - [x] Sub-task: Load `restorer_model.pth` and `data/val_dataset.pt`.
+    - [x] Sub-task: Run inference on the entire validation set.
+    - [x] Sub-task: Save combined results (Reference, Disturbed, Restored, Metrics) to `data/val_results.pt`.
 - [x] Task: Setup Flask Backend (`src/viewer_server.py`) (d581976)
-    - [ ] Sub-task: Initialize Flask app and define static file serving.
-    - [ ] Sub-task: Implement `DataLoader` class to handle `val_results.pt`.
-    - [ ] Sub-task: Create API `/api/samples` with pagination (page, limit).
-    - [ ] Sub-task: Create API `/api/filter` for category and metric thresholds.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Data Preparation & Backend Setup' (Protocol in workflow.md)
+    - [x] Sub-task: Initialize Flask app and define static file serving.
+    - [x] Sub-task: Implement `DataLoader` class to handle `val_results.pt`.
+    - [x] Sub-task: Create API `/api/samples` with pagination (page, limit).
+    - [x] Sub-task: Create API `/api/filter` for category and metric thresholds.
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Data Preparation & Backend Setup' (Protocol in workflow.md) (8a37b62)
 
 ## Phase 2: Frontend Implementation
 - [ ] Task: Create Basic HTML Structure (`src/templates/viewer.html`)
