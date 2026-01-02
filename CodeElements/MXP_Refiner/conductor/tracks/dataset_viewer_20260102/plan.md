@@ -20,7 +20,7 @@
     - [ ] Sub-task: Port drawing logic from `visualizer.py` (macros, edges) to HTML5 Canvas API.
     - [ ] Sub-task: Implement "Layers" toggle for different edge types.
     - [ ] Sub-task: Add mouse hover event listeners for tooltips/inspection.
-- [ ] Task: Implement Navigation & Filtering (`src/static/js/app.js`)
+- [x] Task: Implement Navigation & Filtering (`src/static/js/app.js`) (dd03804)
     - [ ] Sub-task: Fetch data from `/api/samples` and render the pagination controls.
     - [ ] Sub-task: Render sample metrics and connect filter inputs to API calls.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Frontend Implementation' (Protocol in workflow.md)
