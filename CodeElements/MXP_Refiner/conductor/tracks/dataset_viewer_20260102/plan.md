@@ -13,7 +13,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Preparation & Backend Setup' (Protocol in workflow.md) (8a37b62)
 
 ## Phase 2: Frontend Implementation
-- [ ] Task: Create Basic HTML Structure (`src/templates/viewer.html`)
+- [x] Task: Create Basic HTML Structure (`src/templates/viewer.html`) (d02a8e4)
     - [ ] Sub-task: Layout containers for "Filter/Sort", "Sample List", and "Detailed View".
     - [ ] Sub-task: Import Bootstrap/CSS and necessary JS libraries.
 - [ ] Task: Implement Canvas Visualization (`src/static/js/visualizer.js`)
