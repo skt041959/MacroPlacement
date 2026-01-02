@@ -16,7 +16,7 @@
 - [x] Task: Create Basic HTML Structure (`src/templates/viewer.html`) (d02a8e4)
     - [ ] Sub-task: Layout containers for "Filter/Sort", "Sample List", and "Detailed View".
     - [ ] Sub-task: Import Bootstrap/CSS and necessary JS libraries.
-- [ ] Task: Implement Canvas Visualization (`src/static/js/visualizer.js`)
+- [x] Task: Implement Canvas Visualization (`src/static/js/visualizer.js`) (a896093)
     - [ ] Sub-task: Port drawing logic from `visualizer.py` (macros, edges) to HTML5 Canvas API.
     - [ ] Sub-task: Implement "Layers" toggle for different edge types.
     - [ ] Sub-task: Add mouse hover event listeners for tooltips/inspection.
