@@ -5,8 +5,8 @@
     - [ ] Sub-task: Implement `gPool` (Top-K Pooling) and `gUnpool` (Unpooling) layers.
     - [ ] Sub-task: Define the `GraphUNet` class with Encoder, Bottleneck, and Decoder paths.
     - [ ] Sub-task: Implement Skip Connections (Concat logic) between Encoder and Decoder.
-- [ ] Task: Unit Test Graph U-Net Connectivity
-    - [ ] Sub-task: Write tests in `tests/test_model_unet.py` to verify output shapes and skip connection logic with variable node counts.
+- [x] Task: Unit Test Graph U-Net Connectivity (565eed3)
+    - [x] Sub-task: Write tests in `tests/test_model_unet.py` to verify output shapes and skip connection logic with variable node counts.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Graph U-Net Core Components' (Protocol in workflow.md)
 
 ## Phase 2: DDPM Training Pipeline
