@@ -44,6 +44,14 @@ class RestorationDataset(Dataset):
                     ])
                     
                 data.y_coords = torch.tensor(target_coords, dtype=torch.float)
+                
+                # Store original macro dicts in info_dict for visualization
+                data.info_dict = {
+                    'aligned': aligned,
+                    'disturbed': disturbed,
+                    'category': self.mode
+                }
+                
                 self.data_list.append(data)
             
             if path:

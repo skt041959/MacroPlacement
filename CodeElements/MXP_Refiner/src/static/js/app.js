@@ -15,6 +15,9 @@ const vizRest = new MacroVisualizer('canvasRest');
 const visualizers = [vizRef, vizDist, vizRest];
 
 async function loadSamples() {
+    const loader = document.getElementById('loadingSpinner');
+    loader.style.display = 'inline-block';
+    
     const params = new URLSearchParams({
         page: currentState.page,
         per_page: currentState.perPage,
@@ -33,6 +36,8 @@ async function loadSamples() {
         updatePaginationUI();
     } catch (err) {
         console.error("Failed to load samples:", err);
+    } finally {
+        loader.style.display = 'none';
     }
 }
 

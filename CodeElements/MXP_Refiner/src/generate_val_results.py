@@ -3,7 +3,7 @@ import os
 from tqdm import tqdm
 from config import Config
 from model import GraphToSeqRestorer
-from evaluate_model import compute_metrics
+from evaluate_model import compute_metrics, get_graph_edges
 
 def generate_results():
     print(f"Loading validation dataset from {Config.VAL_DATA_PATH}...")
@@ -42,6 +42,7 @@ def generate_results():
             # Extract original macros from info_dict (not tensors)
             aligned_macros = data.info_dict['aligned']
             disturbed_macros = data.info_dict['disturbed']
+            category = data.info_dict.get('category', 'N/A')
             
             # Construct edge_attr_dict
             edge_attr_dict = {
@@ -67,12 +68,17 @@ def generate_results():
             # Compute Metrics
             metrics = compute_metrics(aligned_macros, disturbed_macros, restored_macros)
             
+            # Get edges for visualization
+            edges = get_graph_edges(disturbed_macros)
+            
             all_results.append({
                 'id': i,
                 'metrics': metrics,
                 'aligned': aligned_macros,
                 'disturbed': disturbed_macros,
-                'restored': restored_macros
+                'restored': restored_macros,
+                'edges': edges,
+                'category': category
             })
             
     output_path = os.path.join(Config.DATASET_DIR, "val_results.pt")
