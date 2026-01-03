@@ -13,9 +13,9 @@
 - [x] Task: Implement Diffusion Scheduler and Forward SDE (1fc20b8)
     - [x] Sub-task: Add `DiffusionConfig` to `src/config.py` (timesteps, beta schedule).
     - [x] Sub-task: Implement `add_noise` function in `src/utils.py` or new `src/diffusion.py`.
-- [~] Task: Update Supervised Training for Diffusion
-    - [ ] Sub-task: Modify `src/train_restorer.py` to sample random timesteps $t$ and train the model to predict noise $\epsilon$ or $x_0$.
-    - [ ] Sub-task: Implement MSE loss between predicted and ground truth noise.
+- [x] Task: Update Supervised Training for Diffusion (728ff90)
+    - [x] Sub-task: Modify `src/train_restorer.py` to sample random timesteps $t$ and train the model to predict noise $\epsilon$ or $x_0$.
+    - [x] Sub-task: Implement MSE loss between predicted and ground truth noise.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: DDPM Training Pipeline' (Protocol in workflow.md)
 
 ## Phase 3: Alignment-Guided Inference
