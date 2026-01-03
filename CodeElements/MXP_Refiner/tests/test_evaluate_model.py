@@ -52,17 +52,21 @@ def test_compute_metrics():
     # X overlap: 0 (touching at 10.5)
     assert metrics['overlap_restored'] == 0.0
 
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 def test_evaluate_full_val_set_no_report():
     from evaluate_model import evaluate_full_val_set
     # Mock data loading
     with patch('torch.load') as mock_load, \
          patch('os.path.exists') as mock_exists, \
-         patch('evaluate_model.FloorplanRestorationInference') as mock_inf, \
-         patch('evaluate_model.GalleryGenerator') as mock_gallery:
+         patch('evaluate_model.FloorplanRestorationInference') as mock_inf:
         
-        mock_exists.return_value = True
+        def exists_side_effect(path):
+            if "val_dataset.pt" in path:
+                return True
+            return False
+            
+        mock_exists.side_effect = exists_side_effect
         # Mock a data object
         mock_data = MagicMock()
         mock_data.info_dict = {
@@ -75,6 +79,8 @@ def test_evaluate_full_val_set_no_report():
         mock_restorer = mock_inf.return_value
         mock_restorer.restore.return_value = [{'x':0.5,'y':0.5,'w':10,'h':10}]
         
+        # We don't need to patch GalleryGenerator because it should be removed from imports/code
         evaluate_full_val_set()
         
-        mock_gallery.assert_not_called()
+        # Check if evaluation_report.html exists - it shouldn't if we don't create it
+        assert not os.path.exists("evaluation_report.html")
