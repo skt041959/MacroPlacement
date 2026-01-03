@@ -2,12 +2,12 @@
 
 ## Phase 1: Enhanced Data Generation [checkpoint: 7e79d9d]
 - [x] Task: Implement 'Mixed' generation mode in `SyntheticDataGenerator`. (7ee60c0)
-- [~] Task: Update `SyntheticDataGenerator` to support variable noise levels (sampled per layout).
+- [x] Task: Update `SyntheticDataGenerator` to support variable noise levels (sampled per layout). (7ee60c0)
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Enhanced Data Generation' (Protocol in workflow.md) (7e79d9d)
 
 ## Phase 2: Architecture & Training Optimization [checkpoint: 106cba6]
 - [x] Task: Implement Learning Rate Scheduler in src/train_restorer.py. (106cba6)
-- [ ] Task: Tune model hyperparameters in src/config.py (e.g., Hidden Dim 128, 4 Layers).
+- [x] Task: Tune model hyperparameters in src/config.py (e.g., Hidden Dim 128, 4 Layers). (ff51607)
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Architecture & Training Optimization' (Protocol in workflow.md) (106cba6)
 
 ## Phase 3: Advanced Evaluation Metrics [checkpoint: e30ad40]
