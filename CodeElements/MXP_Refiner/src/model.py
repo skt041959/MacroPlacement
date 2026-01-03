@@ -1,10 +1,29 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import math
 from torch_geometric.nn import HeteroConv, GATv2Conv, Linear, TopKPooling
+from torch_geometric.utils import subgraph
 from torch.nn import TransformerDecoder, TransformerDecoderLayer
 
-from torch_geometric.utils import subgraph
+class TimeEmbedding(nn.Module):
+    def __init__(self, dim):
+        super().__init__()
+        self.dim = dim
+        self.mlp = nn.Sequential(
+            nn.Linear(dim // 4, dim),
+            nn.SiLU(),
+            nn.Linear(dim, dim)
+        )
+
+    def forward(self, t):
+        device = t.device
+        half_dim = self.dim // 8
+        embeddings = math.log(10000) / (half_dim - 1)
+        embeddings = torch.exp(torch.arange(half_dim, device=device) * -embeddings)
+        embeddings = t[:, None] * embeddings[None, :]
+        embeddings = torch.cat((embeddings.sin(), embeddings.cos()), dim=-1)
+        return self.mlp(embeddings)
 
 class GraphUNet(nn.Module):
     def __init__(self, hidden_dim, num_layers, num_heads, pool_ratio=0.5):
@@ -13,6 +32,7 @@ class GraphUNet(nn.Module):
         self.num_layers = num_layers
         
         self.node_encoder = Linear(4, hidden_dim)
+        self.time_mlp = TimeEmbedding(hidden_dim)
         
         # Encoder Path
         self.encoder_convs = nn.ModuleList()
@@ -51,20 +71,21 @@ class GraphUNet(nn.Module):
         
         for edge_type, edge_index in edge_index_dict.items():
             attr = edge_attr_dict.get(edge_type)
-            # We must specify num_nodes so index_to_mask knows the dimension
             new_idx, new_attr = subgraph(subset, edge_index, edge_attr=attr, relabel_nodes=True, num_nodes=num_nodes)
             new_edge_index_dict[edge_type] = new_idx
-            if attr is not None:
-                new_edge_attr_dict[edge_type] = new_attr
-            else:
-                new_edge_attr_dict[edge_type] = None
+            new_edge_attr_dict[edge_type] = new_attr if attr is not None else None
                 
         return new_edge_index_dict, new_edge_attr_dict
 
-    def forward(self, x_dict, edge_index_dict, edge_attr_dict):
+    def forward(self, x_dict, edge_index_dict, edge_attr_dict, t):
         x = self.node_encoder(x_dict['macro'])
         num_original_nodes = x.size(0)
         batch = x_dict.get('batch', torch.zeros(num_original_nodes, dtype=torch.long, device=x.device))
+        
+        # Time Embedding
+        time_emb = self.time_mlp(t) # [Batch, Hidden]
+        # Map time embedding to nodes
+        x = x + time_emb[batch]
         
         xs = []
         perms = []
@@ -111,7 +132,6 @@ class GraphUNet(nn.Module):
             x = torch.cat([x, xs[i]], dim=-1)
             
             curr_x_dict = {'macro': x}
-            # Use the edge dict from the corresponding encoder level (unpooled edges)
             out_dict = self.decoder_convs[i](curr_x_dict, edge_dicts[i], attr_dicts[i])
             x = F.elu(out_dict['macro'])
             curr_x_dict = {'macro': x}

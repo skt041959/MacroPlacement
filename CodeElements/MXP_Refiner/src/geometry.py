@@ -15,51 +15,70 @@ def calculate_overlap_area(m1, m2):
 def calculate_total_overlap(macros):
     """
     Calculates the total overlap area among a list of macros.
-    O(N^2) implementation.
+    Optimized O(N^2) using NumPy vectorization.
+    Supports either list of dicts or a single (N, 4) NumPy array [x, y, w, h].
     """
+    if isinstance(macros, np.ndarray):
+        x, y, w, h = macros[:, 0], macros[:, 1], macros[:, 2], macros[:, 3]
+    else:
+        n = len(macros)
+        if n < 2: return 0.0
+        x = np.array([m['x'] for m in macros])
+        y = np.array([m['y'] for m in macros])
+        w = np.array([m['w'] for m in macros])
+        h = np.array([m['h'] for m in macros])
+    
+    n = len(x)
+    if n < 2: return 0.0
+    
+    x2 = x + w
+    y2 = y + h
+    
     total_overlap = 0.0
-    n = len(macros)
     for i in range(n):
-        for j in range(i + 1, n):
-            total_overlap += calculate_overlap_area(macros[i], macros[j])
-    return total_overlap
+        dx = np.minimum(x2[i], x2[i+1:]) - np.maximum(x[i], x[i+1:])
+        dy = np.minimum(y2[i], y2[i+1:]) - np.maximum(y[i], y[i+1:])
+        overlap_areas = np.maximum(0, dx) * np.maximum(0, dy)
+        total_overlap += np.sum(overlap_areas)
+        
+    return float(total_overlap)
 
 def calculate_alignment_score(macros, grid_size=None, threshold=0.1):
     """
     Calculates an alignment score for a list of macros.
-    Score increases with the number of aligned edges.
+    Optimized with NumPy.
+    Supports either list of dicts or a single (N, 2) NumPy array [x, y].
     """
-    score = 0.0
-    n = len(macros)
+    if isinstance(macros, np.ndarray):
+        x, y = macros[:, 0], macros[:, 1]
+    else:
+        n = len(macros)
+        if n < 1: return 0.0
+        x = np.array([m['x'] for m in macros])
+        y = np.array([m['y'] for m in macros])
     
-    # 1. Edge alignment (pairwise)
-    for i in range(n):
-        for j in range(i + 1, n):
-            # Check X alignment (left edges)
-            if abs(macros[i]['x'] - macros[j]['x']) < threshold:
-                score += 1.0
-            # Check Y alignment (bottom edges)
-            if abs(macros[i]['y'] - macros[j]['y']) < threshold:
-                score += 1.0
+    n = len(x)
+    if n < 1: return 0.0
+    
+    score = 0.0
+    if n > 1:
+        diff_x = np.abs(x[:, np.newaxis] - x[np.newaxis, :])
+        score += np.sum(diff_x[np.triu_indices(n, k=1)] < threshold)
+        diff_y = np.abs(y[:, np.newaxis] - y[np.newaxis, :])
+        score += np.sum(diff_y[np.triu_indices(n, k=1)] < threshold)
                 
-    # 2. Grid alignment
     if grid_size is not None:
-        for m in macros:
-            # Check x alignment to grid
-            x_mod = m['x'] % grid_size
-            if x_mod < threshold or abs(grid_size - x_mod) < threshold:
-                score += 1.0
-            # Check y alignment to grid
-            y_mod = m['y'] % grid_size
-            if y_mod < threshold or abs(grid_size - y_mod) < threshold:
-                score += 1.0
+        x_mod = x % grid_size
+        score += np.sum(np.minimum(x_mod, grid_size - x_mod) < threshold)
+        y_mod = y % grid_size
+        score += np.sum(np.minimum(y_mod, grid_size - y_mod) < threshold)
                 
-    return score
+    return float(score)
 
 def calculate_alignment_recovery(aligned, disturbed, restored, threshold=0.1):
     """
     Calculates how much of the original alignment was recovered.
-    Returns a value between 0 and 1 (usually).
+    Supports either list of dicts or NumPy arrays.
     """
     s_aligned = calculate_alignment_score(aligned, threshold=threshold)
     s_disturbed = calculate_alignment_score(disturbed, threshold=threshold)

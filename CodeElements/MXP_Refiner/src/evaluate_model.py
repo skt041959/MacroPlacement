@@ -10,21 +10,25 @@ from tqdm import tqdm
 def compute_metrics(aligned, disturbed, restored):
     """
     Computes core metrics for floorplan restoration.
-    aligned, disturbed, restored: List of macro dicts {'x', 'y', 'w', 'h'}
+    Supports either list of dicts or NumPy arrays [x, y, w, h].
     """
+    if isinstance(aligned, list):
+        aligned_arr = np.array([[m['x'], m['y'], m['w'], m['h']] for m in aligned])
+        disturbed_arr = np.array([[m['x'], m['y'], m['w'], m['h']] for m in disturbed])
+        restored_arr = np.array([[m['x'], m['y'], m['w'], m['h']] for m in restored])
+    else:
+        aligned_arr, disturbed_arr, restored_arr = aligned, disturbed, restored
+
     # 1. MSE (Centers)
-    sq_dist = 0
-    for i in range(len(aligned)):
-        sq_dist += (aligned[i]['x'] - restored[i]['x'])**2 + (aligned[i]['y'] - restored[i]['y'])**2
-    mse = sq_dist / len(aligned)
+    mse = np.mean(np.sum((aligned_arr[:, :2] - restored_arr[:, :2])**2, axis=1))
     
     # 2. Overlap
-    ov_aligned = calculate_total_overlap(aligned)
-    ov_disturbed = calculate_total_overlap(disturbed)
-    ov_restored = calculate_total_overlap(restored)
+    ov_aligned = calculate_total_overlap(aligned_arr)
+    ov_disturbed = calculate_total_overlap(disturbed_arr)
+    ov_restored = calculate_total_overlap(restored_arr)
     
     # 3. Alignment Recovery
-    recovery = calculate_alignment_recovery(aligned, disturbed, restored)
+    recovery = calculate_alignment_recovery(aligned_arr[:, :2], disturbed_arr[:, :2], restored_arr[:, :2])
     
     return {
         'mse': float(mse),

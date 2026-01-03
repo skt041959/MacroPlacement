@@ -41,7 +41,8 @@ def test_graph_unet_forward():
         ('macro', 'logic_edge', 'macro'): edge_attr
     }
     
-    out = model(x_dict, edge_index_dict, edge_attr_dict)
+    t = torch.zeros(1, dtype=torch.long)
+    out = model(x_dict, edge_index_dict, edge_attr_dict, t)
     
     # Output should be (x, y) for each node
     assert out.shape == (num_nodes, 2)
@@ -66,5 +67,6 @@ def test_graph_unet_variable_nodes():
             ('macro', 'align_edge', 'macro'): None,
             ('macro', 'logic_edge', 'macro'): edge_attr
         }
-        out = model(x_dict, edge_index_dict, edge_attr_dict)
+        t = torch.zeros(1, dtype=torch.long)
+        out = model(x_dict, edge_index_dict, edge_attr_dict, t)
         assert out.shape == (n, 2)

@@ -13,7 +13,7 @@ class Config:
     # 模型参数
     HIDDEN_DIM = 128
     NUM_HEADS = 4
-    NUM_LAYERS = 4
+    NUM_LAYERS = 8
     ACTION_DIM = 7  # [NoOp, Up, Down, Left, Right, Snap_X, Snap_Y]
     
     # RL 参数

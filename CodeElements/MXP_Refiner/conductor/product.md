@@ -8,10 +8,11 @@ The MXP Refiner aims to provide a high-performance, ML-driven alternative for ma
 
 ## Implementation Strategy
 The development will follow a phased approach:
-1.  **Phase 1: Synthetic Data Generation (Completed):** Established a robust synthetic data generator (`SyntheticDataGenerator`) capable of creating aligned clusters of macros and perturbing them to simulate initial placement states. Implemented geometric kernels for overlap detection and alignment scoring.
+1.  **Phase 1: Synthetic Data Generation (Completed):** Established a robust synthetic data generator (`SyntheticDataGenerator`) capable of creating aligned clusters of macros, pattern-based placements (grid, rows), and complex 'Mixed' scenarios. Implemented geometric kernels for overlap detection and alignment scoring.
 2.  **Phase 2: Graph-to-Sequence Restoration Model (Completed):** Developed a Graph-to-Sequence model (`FloorplanRestorer`) using a HeteroGAT Encoder and GRU Decoder. Implemented a supervised training pipeline with a combined MSE and Alignment loss, trained on 100,000 synthetic samples.
-3.  **Phase 3: RL-Driven Optimization:** Integrate Reinforcement Learning (PPO/A2C) to optimize for wirelength (HPWL) and complex placement objectives using real-world connectivity constraints.
-4.  **Phase 4: Integration & PPA Validation:** Validate final layouts with commercial EDA flows.
+3.  **Phase 3: Fine-Tuning & Advanced Metrics (Completed):** Optimized the restoration model with advanced training techniques (LR schedulers) and implemented 'Alignment Recovery' metrics to quantify model effectiveness.
+4.  **Phase 4: RL-Driven Optimization:** Integrate Reinforcement Learning (PPO/A2C) to optimize for wirelength (HPWL) and complex placement objectives using real-world connectivity constraints.
+5.  **Phase 5: Integration & PPA Validation:** Validate final layouts with commercial EDA flows.
 
 ## Target Users
 - **EDA Tool Developers:** Looking to integrate advanced RL-based refinement techniques into production-grade physical design flows.
