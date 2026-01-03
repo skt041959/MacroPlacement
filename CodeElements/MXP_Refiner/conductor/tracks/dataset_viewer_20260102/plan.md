@@ -12,18 +12,18 @@
     - [x] Sub-task: Create API `/api/filter` for category and metric thresholds.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Data Preparation & Backend Setup' (Protocol in workflow.md) (8a37b62)
 
-## Phase 2: Frontend Implementation
+## Phase 2: Frontend Implementation [checkpoint: 1730043]
 - [x] Task: Create Basic HTML Structure (`src/templates/viewer.html`) (d02a8e4)
-    - [ ] Sub-task: Layout containers for "Filter/Sort", "Sample List", and "Detailed View".
-    - [ ] Sub-task: Import Bootstrap/CSS and necessary JS libraries.
+    - [x] Sub-task: Layout containers for "Filter/Sort", "Sample List", and "Detailed View".
+    - [x] Sub-task: Import Bootstrap/CSS and necessary JS libraries.
 - [x] Task: Implement Canvas Visualization (`src/static/js/visualizer.js`) (a896093)
-    - [ ] Sub-task: Port drawing logic from `visualizer.py` (macros, edges) to HTML5 Canvas API.
-    - [ ] Sub-task: Implement "Layers" toggle for different edge types.
-    - [ ] Sub-task: Add mouse hover event listeners for tooltips/inspection.
+    - [x] Sub-task: Port drawing logic from `visualizer.py` (macros, edges) to HTML5 Canvas API.
+    - [x] Sub-task: Implement "Layers" toggle for different edge types.
+    - [x] Sub-task: Add mouse hover event listeners for tooltips/inspection.
 - [x] Task: Implement Navigation & Filtering (`src/static/js/app.js`) (dd03804)
-    - [ ] Sub-task: Fetch data from `/api/samples` and render the pagination controls.
-    - [ ] Sub-task: Render sample metrics and connect filter inputs to API calls.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Frontend Implementation' (Protocol in workflow.md)
+    - [x] Sub-task: Fetch data from `/api/samples` and render the pagination controls.
+    - [x] Sub-task: Render sample metrics and connect filter inputs to API calls.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Frontend Implementation' (Protocol in workflow.md) (1730043)
 
 ## Phase 3: Integration & Polish
 - [ ] Task: Connect Backend and Frontend
