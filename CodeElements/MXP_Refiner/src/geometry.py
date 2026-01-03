@@ -55,3 +55,19 @@ def calculate_alignment_score(macros, grid_size=None, threshold=0.1):
                 score += 1.0
                 
     return score
+
+def calculate_alignment_recovery(aligned, disturbed, restored, threshold=0.1):
+    """
+    Calculates how much of the original alignment was recovered.
+    Returns a value between 0 and 1 (usually).
+    """
+    s_aligned = calculate_alignment_score(aligned, threshold=threshold)
+    s_disturbed = calculate_alignment_score(disturbed, threshold=threshold)
+    s_restored = calculate_alignment_score(restored, threshold=threshold)
+    
+    denom = s_aligned - s_disturbed
+    if abs(denom) < 1e-6:
+        return 1.0 if abs(s_restored - s_aligned) < 1e-6 else 0.0
+        
+    recovery = (s_restored - s_disturbed) / denom
+    return float(np.clip(recovery, 0.0, 1.0))

@@ -5,6 +5,8 @@ from data_builder import GraphBuilder
 from restore_floorplan import FloorplanRestorationInference
 import os
 import numpy as np
+import torch
+import random
 
 def get_graph_edges(macros):
     # Dummy netlist for now
@@ -33,73 +35,51 @@ def get_graph_edges(macros):
     return edges
 
 def inspect_data():
-    print(f"Generating data using mode: {Config.GENERATION_MODE}")
-    generator = SyntheticDataGenerator(seed=Config.SEED, 
-                                     canvas_width=Config.CANVAS_WIDTH, 
-                                     canvas_height=Config.CANVAS_HEIGHT)
-    
-    # Initialize Restorer
-    restorer = FloorplanRestorationInference()
-    
-    # We want "two kinds of macro size, each size has 10 macros" -> Total 20 macros, 2 clusters.
-    count = 20
+    print("Loading samples from categorized datasets...")
     
     data_groups = []
+    restorer = FloorplanRestorationInference()
     
-    # Generate a few independent groups (Reference layouts)
-    for g in range(10):
-        # Vary seed for each group to ensure diversity
-        group_generator = SyntheticDataGenerator(seed=Config.SEED + g, 
-                                               canvas_width=Config.CANVAS_WIDTH, 
-                                               canvas_height=Config.CANVAS_HEIGHT)
+    # Pick 2 samples from each category
+    for category in Config.CATEGORIES:
+        path = Config.DATASET_PATH_TEMPLATE.format(category)
+        if not os.path.exists(path): continue
         
-        # Generate Reference
-        aligned, _ = group_generator.generate(count=count, 
-                                      mode=Config.GENERATION_MODE, 
-                                      cluster_count=np.random.randint(2, 5),
-                                      noise_level=0.0)
+        print(f"Sampling from {path}...")
+        dataset = torch.load(path, weights_only=False)
+        indices = random.sample(range(len(dataset)), 2)
         
-        # Build graph for reference
-        ref_edges = get_graph_edges(aligned)
-        
-        # Generate Multiple Disturbed Samples from this Reference
-        samples = []
-        restored_list = []
-        for s in range(2): # 2 samples per group
-            # We use the internal helper to just perturb the existing reference
-            disturbed = group_generator._perturb_macros(aligned, noise_level=Config.NOISE_LEVEL)
+        for idx in indices:
+            data = dataset[idx]
+            
+            # Use stored macros for exact visualization
+            aligned = data.aligned_macros
+            disturbed = data.disturbed_macros
             
             # Restore
             restored = restorer.restore(disturbed)
             
-            # Build graph for disturbed
+            # Compute Metrics
+            # (Adding dummy values if needed or computing properly)
+            from evaluate_model import compute_metrics
+            metrics = compute_metrics(aligned, disturbed, restored)
+            
+            # Edges
+            ref_edges = get_graph_edges(aligned)
             dist_edges = get_graph_edges(disturbed)
-            # Build graph for restored
             rest_edges = get_graph_edges(restored)
             
-            samples.append({
-                'macros': disturbed,
-                'edges': dist_edges
+            data_groups.append({
+                'reference': {'macros': aligned, 'edges': ref_edges},
+                'samples': [{'macros': disturbed, 'edges': dist_edges}],
+                'restored': [{'macros': restored, 'edges': rest_edges}],
+                'metrics': metrics
             })
-            restored_list.append({
-                'macros': restored,
-                'edges': rest_edges
-            })
-            
-        data_groups.append({
-            'reference': {
-                'macros': aligned,
-                'edges': ref_edges
-            },
-            'samples': samples,
-            'restored': restored_list
-        })
     
-    output_path = "data_preview.html"
+    output_path = "categorized_preview.html"
     viz = GalleryGenerator(output_path)
     viz.generate(data_groups)
-    
-    print(f"Gallery preview generated at {output_path}")
+    print(f"Categorized preview generated at {output_path}")
 
 if __name__ == "__main__":
     inspect_data()

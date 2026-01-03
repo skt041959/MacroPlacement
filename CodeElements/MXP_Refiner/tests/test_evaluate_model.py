@@ -51,3 +51,30 @@ def test_compute_metrics():
     # Box 2: [10.5, 20.5] x [0.5, 10.5]
     # X overlap: 0 (touching at 10.5)
     assert metrics['overlap_restored'] == 0.0
+
+from unittest.mock import patch
+
+def test_evaluate_full_val_set_no_report():
+    from evaluate_model import evaluate_full_val_set
+    # Mock data loading
+    with patch('torch.load') as mock_load, \
+         patch('os.path.exists') as mock_exists, \
+         patch('evaluate_model.FloorplanRestorationInference') as mock_inf, \
+         patch('evaluate_model.GalleryGenerator') as mock_gallery:
+        
+        mock_exists.return_value = True
+        # Mock a data object
+        mock_data = MagicMock()
+        mock_data.info_dict = {
+            'aligned': [{'x':0,'y':0,'w':10,'h':10}],
+            'disturbed': [{'x':1,'y':1,'w':10,'h':10}]
+        }
+        mock_load.return_value = [mock_data]
+        
+        # Mock inference return
+        mock_restorer = mock_inf.return_value
+        mock_restorer.restore.return_value = [{'x':0.5,'y':0.5,'w':10,'h':10}]
+        
+        evaluate_full_val_set()
+        
+        mock_gallery.assert_not_called()

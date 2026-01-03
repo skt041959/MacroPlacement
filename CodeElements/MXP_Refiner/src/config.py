@@ -22,11 +22,23 @@ class Config:
     
     # 数据生成参数
     SEED = 42
-    GENERATION_MODE = 'mixed' # 'random', 'grid', 'rows', 'clustered', 'mixed'
+    GENERATION_MODE = 'mixed' 
     GRID_COLS = 5
-    NOISE_LEVEL = (5.0, 40.0) # Range for displacement
-    NUM_TRAIN_SAMPLES = 10000
-    DATASET_PATH = 'data/restoration_dataset_10k_mixed.pt'
+    NOISE_LEVEL = (5.0, 40.0) 
+    NUM_TRAIN_SAMPLES = 5000
+    
+    # Dataset categories
+    CATEGORIES = ['grid', 'rows', 'clustered']
+    DATASET_DIR = 'data'
+    DATASET_PATH_TEMPLATE = 'data/restoration_{}.pt'
+    
+    # Combined dataset path for training
+    DATASET_PATH = 'data/restoration_dataset_combined.pt'
+    
+    # Train/Val Split
+    VAL_RATIO = 0.1 # 10% for validation
+    TRAIN_DATA_PATH = 'data/train_dataset.pt'
+    VAL_DATA_PATH = 'data/val_dataset.pt'
 
     # 训练参数 (Restorer)
     RESTORER_EPOCHS = 100

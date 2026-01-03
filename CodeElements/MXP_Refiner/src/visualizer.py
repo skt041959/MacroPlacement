@@ -350,7 +350,22 @@ class GalleryGenerator(DashboardGenerator):
             title.innerText = `Group ${{index + 1}}`;
             groupDiv.appendChild(title);
             
-            const rowDiv = document.createElement('div');
+                        // Metrics Display
+                        if (group.metrics) {{
+                            const metDiv = document.createElement('div');
+                            metDiv.style.margin = '10px 0';
+                            metDiv.style.padding = '10px';
+                            metDiv.style.backgroundColor = '#fff';
+                            metDiv.style.border = '1px solid #ddd';
+                            metDiv.innerHTML = `
+                                <strong>Metrics:</strong> 
+                                MSE: ${{group.metrics.mse.toFixed(2)}} | 
+                                Overlap (Ref/Dist/Rest): ${{group.metrics.overlap_aligned.toFixed(0)}} / ${{group.metrics.overlap_disturbed.toFixed(0)}} / ${{group.metrics.overlap_restored.toFixed(0)}} |
+                                Alignment Recovery: ${{ (group.metrics.alignment_recovery * 100).toFixed(1) }}%
+                            `;
+                            groupDiv.appendChild(metDiv);
+                        }}
+                        const rowDiv = document.createElement('div');
             rowDiv.className = 'row';
             
             // Reference

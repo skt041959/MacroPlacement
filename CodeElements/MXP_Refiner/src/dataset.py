@@ -1,14 +1,30 @@
 import torch
 from torch.utils.data import Dataset
+from torch_geometric.data import HeteroData
 from generator import SyntheticDataGenerator
 from data_builder import GraphBuilder
 from config import Config
-import numpy as np
 import os
 from tqdm import tqdm
+from typing_extensions import override
 
-class RestorationDataset(Dataset):
-    def __init__(self, num_samples=100, count=None, mode=None, noise_level=None, seed=None, path=None):
+class RestorationDataset(Dataset[HeteroData]):
+    num_samples: int
+    count: int
+    mode: str
+    noise_level: float | tuple[float, float]
+    generator: SyntheticDataGenerator
+    data_list: list[HeteroData]
+
+    def __init__(
+        self, 
+        num_samples: int = 100, 
+        count: int | None = None, 
+        mode: str | None = None, 
+        noise_level: float | tuple[float, float] | None = None, 
+        seed: int | None = None, 
+        path: str | None = None
+    ) -> None:
         self.num_samples = num_samples
         self.count = count if count is not None else Config.MACRO_COUNT
         self.mode = mode if mode is not None else Config.GENERATION_MODE
@@ -19,25 +35,29 @@ class RestorationDataset(Dataset):
             self.data_list = torch.load(path, weights_only=False)
             self.num_samples = len(self.data_list)
         else:
-            self.generator = SyntheticDataGenerator(seed=seed, 
-                                                   canvas_width=Config.CANVAS_WIDTH, 
-                                                   canvas_height=Config.CANVAS_HEIGHT)
+            self.generator = SyntheticDataGenerator(
+                seed=seed, 
+                canvas_width=int(Config.CANVAS_WIDTH), 
+                canvas_height=int(Config.CANVAS_HEIGHT)
+            )
             
             self.data_list = []
             print(f"Generating {num_samples} samples...")
-            for i in tqdm(range(num_samples), desc="Generating Data"):
-                aligned, disturbed = self.generator.generate(count=self.count, 
-                                                           mode=self.mode, 
-                                                           noise_level=self.noise_level,
-                                                           grid_cols=Config.GRID_COLS)
+            for _ in tqdm(range(num_samples), desc="Generating Data"):
+                aligned, disturbed = self.generator.generate(
+                    count=self.count, 
+                    mode=self.mode, 
+                    noise_level=self.noise_level,
+                    grid_cols=Config.GRID_COLS
+                )
                 
                 builder = GraphBuilder(disturbed, netlist=[])
                 data = builder.build_hetero_graph()
                 
-                target_coords = []
+                target_coords: list[list[float]] = []
                 for m in aligned:
-                    cx = m['x'] + m['w'] / 2
-                    cy = m['y'] + m['h'] / 2
+                    cx = float(m['x'] + m['w'] / 2)
+                    cy = float(m['y'] + m['h'] / 2)
                     target_coords.append([
                         cx / Config.CANVAS_WIDTH,
                         cy / Config.CANVAS_HEIGHT
@@ -58,8 +78,9 @@ class RestorationDataset(Dataset):
                 print(f"Saving dataset to {path}")
                 torch.save(self.data_list, path)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.data_list)
 
-    def __getitem__(self, idx):
+    @override
+    def __getitem__(self, idx: int) -> HeteroData:
         return self.data_list[idx]

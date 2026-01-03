@@ -33,6 +33,16 @@ class GraphBuilder:
             ])
             
         data['macro'].x = torch.tensor(node_feats, dtype=torch.float)
+        
+        if len(centers) < 3:
+            # Not enough points for Delaunay
+            data['macro', 'phys_edge', 'macro'].edge_index = torch.empty((2, 0), dtype=torch.long)
+            data['macro', 'phys_edge', 'macro'].edge_attr = torch.empty((0, 1), dtype=torch.float)
+            data['macro', 'align_edge', 'macro'].edge_index = torch.empty((2, 0), dtype=torch.long)
+            data['macro', 'logic_edge', 'macro'].edge_index = torch.empty((2, 0), dtype=torch.long)
+            data['macro', 'logic_edge', 'macro'].edge_attr = torch.empty((0, 1), dtype=torch.float)
+            return data
+
         centers = np.array(centers)
 
         # 2. 构建物理边 (Physical Edges) - 基于 Delaunay

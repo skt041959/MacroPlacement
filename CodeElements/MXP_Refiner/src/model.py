@@ -45,15 +45,14 @@ class GraphUNet(nn.Module):
             
         self.output_layer = nn.Linear(hidden_dim, 2)
 
-    def _filter_edge_dict(self, edge_index_dict, edge_attr_dict, subset):
+    def _filter_edge_dict(self, edge_index_dict, edge_attr_dict, subset, num_nodes):
         new_edge_index_dict = {}
         new_edge_attr_dict = {}
         
         for edge_type, edge_index in edge_index_dict.items():
             attr = edge_attr_dict.get(edge_type)
-            # subset is the perm indices
-            new_idx, new_attr = subgraph(subset, edge_index, edge_attr=attr, relabel_nodes=True, num_nodes=None) # num_nodes should be original total?
-            # subgraph relabel works relative to the nodes in subset.
+            # We must specify num_nodes so index_to_mask knows the dimension
+            new_idx, new_attr = subgraph(subset, edge_index, edge_attr=attr, relabel_nodes=True, num_nodes=num_nodes)
             new_edge_index_dict[edge_type] = new_idx
             if attr is not None:
                 new_edge_attr_dict[edge_type] = new_attr
@@ -64,7 +63,8 @@ class GraphUNet(nn.Module):
 
     def forward(self, x_dict, edge_index_dict, edge_attr_dict):
         x = self.node_encoder(x_dict['macro'])
-        batch = x_dict.get('batch', torch.zeros(x.size(0), dtype=torch.long, device=x.device))
+        num_original_nodes = x.size(0)
+        batch = x_dict.get('batch', torch.zeros(num_original_nodes, dtype=torch.long, device=x.device))
         
         xs = []
         perms = []
@@ -75,6 +75,7 @@ class GraphUNet(nn.Module):
         curr_x_dict = {'macro': x}
         curr_edge_index_dict = edge_index_dict
         curr_edge_attr_dict = edge_attr_dict
+        curr_num_nodes = num_original_nodes
         
         for i in range(self.num_layers):
             out_dict = self.encoder_convs[i](curr_x_dict, curr_edge_index_dict, curr_edge_attr_dict)
@@ -84,7 +85,6 @@ class GraphUNet(nn.Module):
             attr_dicts.append(curr_edge_attr_dict)
             
             # Pooling (gPool)
-            # Use phys_edge for pooling scores
             phys_idx = curr_edge_index_dict[('macro', 'phys_edge', 'macro')]
             phys_attr = curr_edge_attr_dict.get(('macro', 'phys_edge', 'macro'))
             
@@ -92,7 +92,8 @@ class GraphUNet(nn.Module):
             perms.append(perm)
             
             # Filter all edges for the pooled graph
-            curr_edge_index_dict, curr_edge_attr_dict = self._filter_edge_dict(curr_edge_index_dict, curr_edge_attr_dict, perm)
+            curr_edge_index_dict, curr_edge_attr_dict = self._filter_edge_dict(curr_edge_index_dict, curr_edge_attr_dict, perm, curr_num_nodes)
+            curr_num_nodes = x.size(0)
             curr_x_dict = {'macro': x}
             
         # Bottleneck

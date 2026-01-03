@@ -22,6 +22,7 @@ The development will follow a phased approach:
 - **Geometric Alignment Optimization:** Enhances layout regularity through specialized alignment edges and snapping actions (Snap_X/Snap_Y).
 - **Logical Connectivity Awareness:** Minimizes Half-Perimeter Wire Length (HPWL) by accounting for netlist connectivity via logic edges.
 - **Interactive Training Dashboard:** Real-time visualization of layout evolution and training metrics for easier model debugging and evaluation.
+- **Advanced Dataset Inspection:** Interactive web-based viewer for analyzing restoration performance across the entire validation set, featuring side-by-side comparison and metric filtering.
 - **Protobuf-based Data Interface:** Seamlessly imports placement data using Protobuf from LEF/DEF format data, integrated directly within the repository.
 
 ## Success Metrics

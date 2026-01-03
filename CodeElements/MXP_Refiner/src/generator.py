@@ -1,23 +1,30 @@
 import numpy as np
+from typing import Any
 
 class SyntheticDataGenerator:
-    def __init__(self, seed=None, canvas_width=1000, canvas_height=1000):
+    def __init__(self, seed: int | None = None, canvas_width: int = 1000, canvas_height: int = 1000):
         self.seed = seed
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
         if seed is not None:
             np.random.seed(seed)
 
-    def generate(self, count=10, mode='random', noise_level=0.0, **kwargs):
+    def generate(
+        self, 
+        count: int = 10, 
+        mode: str = 'random', 
+        noise_level: float | tuple[float, float] = 0.0, 
+        **kwargs: Any
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
         """
         Generates a set of macros.
         Returns: (aligned_macros, disturbed_macros)
         """
         # Handle variable noise level
         if isinstance(noise_level, (list, tuple)):
-            actual_noise = np.random.uniform(noise_level[0], noise_level[1])
+            actual_noise = float(np.random.uniform(noise_level[0], noise_level[1]))
         else:
-            actual_noise = noise_level
+            actual_noise = float(noise_level)
 
         if mode == 'random':
             macros = self._generate_random(count, **kwargs)
@@ -37,7 +44,7 @@ class SyntheticDataGenerator:
         disturbed = self._perturb_macros(aligned, actual_noise)
         return aligned, disturbed
 
-    def _generate_random(self, count, **kwargs):
+    def _generate_random(self, count: int, **kwargs: Any) -> list[dict[str, Any]]:
         macros = []
         for i in range(count):
             w = 40 + np.random.rand() * 60
@@ -53,7 +60,7 @@ class SyntheticDataGenerator:
             })
         return macros
 
-    def _generate_grid(self, count, grid_cols=None, **kwargs):
+    def _generate_grid(self, count: int, grid_cols: int | None = None, **kwargs: Any) -> list[dict[str, Any]]:
         if grid_cols is None:
             grid_cols = int(np.ceil(np.sqrt(count)))
         
@@ -76,7 +83,7 @@ class SyntheticDataGenerator:
             })
         return macros
 
-    def _generate_rows(self, count, rows=2, **kwargs):
+    def _generate_rows(self, count: int, rows: int = 2, **kwargs: Any) -> list[dict[str, Any]]:
         macros = []
         per_row = int(np.ceil(count / rows))
         spacing = 20
@@ -98,11 +105,11 @@ class SyntheticDataGenerator:
             current_y += max_h_in_row + spacing + 20
         return macros
 
-    def _generate_clustered(self, count, cluster_count=2, **kwargs):
+    def _generate_clustered(self, count: int, cluster_count: int = 2, **kwargs: Any) -> list[dict[str, Any]]:
         macros = []
         per_cluster = int(np.ceil(count / cluster_count))
-        current_x, current_y = 50, 50
-        max_h_in_row = 0
+        current_x, current_y = 50.0, 50.0
+        max_h_in_row = 0.0
         spacing = 40
         cluster_spacing = 80
         for k in range(cluster_count):
@@ -112,9 +119,9 @@ class SyntheticDataGenerator:
             cluster_rows = int(np.ceil(per_cluster / cluster_cols))
             cluster_width = cluster_cols * (w + spacing)
             if current_x + cluster_width > self.canvas_width:
-                current_x = 50
+                current_x = 50.0
                 current_y += max_h_in_row + cluster_spacing
-                max_h_in_row = 0
+                max_h_in_row = 0.0
             cluster_height = cluster_rows * (h + spacing)
             max_h_in_row = max(max_h_in_row, cluster_height)
             for i in range(per_cluster):
@@ -129,7 +136,7 @@ class SyntheticDataGenerator:
             current_x += cluster_width + cluster_spacing
         return macros
 
-    def _generate_mixed(self, count, **kwargs):
+    def _generate_mixed(self, count: int, **kwargs: Any) -> list[dict[str, Any]]:
         """
         Clarified Mixed Mode:
         - Divide 'count' macros into multiple clusters (Dynamic Count).
@@ -137,7 +144,7 @@ class SyntheticDataGenerator:
         - Each cluster is aligned in a variable grid shape.
         - All macros are structured within clusters.
         """
-        num_clusters = np.random.randint(2, 5)
+        num_clusters = int(np.random.randint(2, 5))
         
         # 1. Split count into clusters
         cluster_counts = []
@@ -146,7 +153,7 @@ class SyntheticDataGenerator:
             if remaining <= 1: break
             # Ensure at least 1 macro per cluster, but try to keep them decent sized
             upper = max(2, remaining // 2)
-            c = np.random.randint(1, upper + 1)
+            c = int(np.random.randint(1, upper + 1))
             cluster_counts.append(c)
             remaining -= c
         if remaining > 0:
@@ -154,24 +161,24 @@ class SyntheticDataGenerator:
         
         # 2. Define two distinct macro sizes for the pool
         size_pool = [
-            (40 + np.random.rand() * 20, 40 + np.random.rand() * 20), # Size Type 1 (Small)
-            (70 + np.random.rand() * 30, 70 + np.random.rand() * 30)  # Size Type 2 (Large)
+            (float(40 + np.random.rand() * 20), float(40 + np.random.rand() * 20)), # Size Type 1 (Small)
+            (float(70 + np.random.rand() * 30), float(70 + np.random.rand() * 30))  # Size Type 2 (Large)
         ]
         
         macros = []
-        current_x, current_y = 50, 50
-        max_h_in_row = 0
+        current_x, current_y = 50.0, 50.0
+        max_h_in_row = 0.0
         spacing = 15
         cluster_spacing = 50
         
         for c_count in cluster_counts:
             # Pick a size from pool
-            w, h = size_pool[np.random.randint(0, len(size_pool))]
+            w, h = size_pool[int(np.random.randint(0, len(size_pool)))]
             
             # 3. Determine grid shape (randomly biased towards square-ish)
             ideal_cols = int(np.ceil(np.sqrt(c_count)))
             # Add some variation to the shape
-            cols = np.random.randint(max(1, ideal_cols - 1), ideal_cols + 2)
+            cols = int(np.random.randint(max(1, ideal_cols - 1), ideal_cols + 2))
             rows = int(np.ceil(c_count / cols))
             
             cluster_w = cols * w + (cols - 1) * spacing
@@ -179,9 +186,9 @@ class SyntheticDataGenerator:
             
             # 4. Simple row-based packing for clusters on the canvas
             if current_x + cluster_w > self.canvas_width - 50:
-                current_x = 50
+                current_x = 50.0
                 current_y += max_h_in_row + cluster_spacing
-                max_h_in_row = 0
+                max_h_in_row = 0.0
             
             # Stop if we run out of vertical space
             if current_y + cluster_h > self.canvas_height - 50:
@@ -205,24 +212,18 @@ class SyntheticDataGenerator:
             
         return macros
 
-    def _perturb_macros(self, macros, noise_level):
-        # Handle range
-        if isinstance(noise_level, (list, tuple)):
-            actual_noise = np.random.uniform(noise_level[0], noise_level[1])
-        else:
-            actual_noise = noise_level
-
-        if actual_noise <= 0:
+    def _perturb_macros(self, macros: list[dict[str, Any]], noise_level: float) -> list[dict[str, Any]]:
+        if noise_level <= 0:
             return [m.copy() for m in macros]
             
         disturbed = []
         for m in macros:
             new_m = m.copy()
-            dx = (np.random.rand() - 0.5) * 2 * actual_noise
-            dy = (np.random.rand() - 0.5) * 2 * actual_noise
+            dx = (np.random.rand() - 0.5) * 2 * noise_level
+            dy = (np.random.rand() - 0.5) * 2 * noise_level
             new_m['x'] += dx
             new_m['y'] += dy
-            new_m['x'] = np.clip(new_m['x'], 0, self.canvas_width - new_m['w'])
-            new_m['y'] = np.clip(new_m['y'], 0, self.canvas_height - new_m['h'])
+            new_m['x'] = float(np.clip(new_m['x'], 0, self.canvas_width - new_m['w']))
+            new_m['y'] = float(np.clip(new_m['y'], 0, self.canvas_height - new_m['h']))
             disturbed.append(new_m)
         return disturbed

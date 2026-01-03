@@ -75,3 +75,14 @@ def test_grid_alignment():
     # Both are on 10-unit grid
     score = calculate_alignment_score(macros, grid_size=10.0)
     assert score > 0
+
+def test_alignment_recovery():
+    from src.geometry import calculate_alignment_recovery
+    aligned = [{'x': 0, 'y': 0, 'w': 10, 'h': 10}, {'x': 0, 'y': 20, 'w': 10, 'h': 10}]
+    disturbed = [{'x': 2, 'y': 1, 'w': 10, 'h': 10}, {'x': -1, 'y': 19, 'w': 10, 'h': 10}]
+    restored = [{'x': 0.1, 'y': 0.1, 'w': 10, 'h': 10}, {'x': 0.1, 'y': 20.1, 'w': 10, 'h': 10}]
+    
+    recovery = calculate_alignment_recovery(aligned, disturbed, restored)
+    # restored is much closer to aligned than disturbed is
+    assert recovery > 0.5
+    assert recovery <= 1.0
