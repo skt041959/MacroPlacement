@@ -22,7 +22,7 @@ class DataLoader:
         if category:
             filtered_data = [d for d in filtered_data if d.get('category') == category]
             
-        if min_mse is not None:
+        if min_mse:
             filtered_data = [d for d in filtered_data if d['metrics']['mse'] >= float(min_mse)]
             
         start = (page - 1) * per_page

@@ -94,3 +94,9 @@ def test_api_filter(mock_torch_load, mock_exists):
     response = client.get('/api/samples?min_mse=15')
     data = json.loads(response.data)
     assert data['total'] == 5 # 15, 16, 17, 18, 19
+
+    # Regression test: empty min_mse should not crash
+    response = client.get('/api/samples?min_mse=')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['total'] == 20
