@@ -13,4 +13,6 @@
 ## Phase 3: Advanced Evaluation Metrics
 - [x] Task: Implement Alignment Recovery Score in `src/geometry.py`. (a53188a)
 - [x] Task: Update `src/evaluate_model.py` to compute and report metrics (MSE, Overlap, Alignment). (494484a)
+- [x] Task: Update `src/train_restorer.py` to log Overlap and Alignment metrics during validation. (14dc02c)
+- [ ] Task: Refactor `src/evaluate_model.py` to remove legacy snapshot generation.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Advanced Evaluation Metrics' (Protocol in workflow.md)
