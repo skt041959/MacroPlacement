@@ -10,9 +10,9 @@
 - [ ] Task: Tune model hyperparameters in src/config.py (e.g., Hidden Dim 128, 4 Layers).
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Architecture & Training Optimization' (Protocol in workflow.md) (106cba6)
 
-## Phase 3: Advanced Evaluation Metrics
+## Phase 3: Advanced Evaluation Metrics [checkpoint: e30ad40]
 - [x] Task: Implement Alignment Recovery Score in `src/geometry.py`. (a53188a)
 - [x] Task: Update `src/evaluate_model.py` to compute and report metrics (MSE, Overlap, Alignment). (494484a)
 - [x] Task: Update `src/train_restorer.py` to log Overlap and Alignment metrics during validation. (14dc02c)
 - [x] Task: Refactor `src/evaluate_model.py` to remove legacy snapshot generation. (0f07df0)
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Advanced Evaluation Metrics' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Advanced Evaluation Metrics' (Protocol in workflow.md) (e30ad40)
