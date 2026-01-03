@@ -26,89 +26,76 @@ def test_train_restorer_logging(mock_diff_cls, mock_csv_writer, mock_save, mock_
     Config.VAL_DATA_PATH = "dummy_val.pt"
     Config.TRAIN_DATA_PATH = "dummy_train.pt"
     
+    # Identify device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     # Mock Scheduler
     mock_diff = MagicMock()
     mock_diff_cls.return_value = mock_diff
     mock_diff.num_steps = 100 
     
+    # Mock tensors on the correct device
+    mock_diff.sqrt_alphas_cumprod = torch.ones(101, device=device)
+    mock_diff.sqrt_one_minus_alphas_cumprod = torch.zeros(101, device=device)
+    
     def add_noise_side_effect(x_0, t, noise=None):
-        device = x_0.device
         if noise is None:
-            noise = torch.zeros_like(x_0, device=device)
-        return torch.zeros_like(x_0, device=device, requires_grad=True), noise
+            noise = torch.zeros_like(x_0)
+        return torch.zeros_like(x_0, requires_grad=True), noise
         
     mock_diff.add_noise.side_effect = add_noise_side_effect
-    
-    # Mock sqrt values
-    mock_diff.sqrt_alphas_cumprod = torch.ones(101)
-    mock_diff.sqrt_one_minus_alphas_cumprod = torch.zeros(101)
-    
-    # Move mock tensors to device simulated by .to() in code
-    def diff_to_side_effect(device):
-        mock_diff.sqrt_alphas_cumprod = mock_diff.sqrt_alphas_cumprod.to(device)
-        mock_diff.sqrt_one_minus_alphas_cumprod = mock_diff.sqrt_one_minus_alphas_cumprod.to(device)
-        return mock_diff
-    # Wait, DiffusionScheduler in code is not moved via .to(), 
-    # its attributes are assigned with .to(device).
-    # ...
-    # diffusion.sqrt_alphas_cumprod = diffusion.sqrt_alphas_cumprod.to(device)
-    # This is handled in the code.
     
     # Mock Model
     mock_model = MagicMock()
     mock_model_cls.return_value = mock_model
-    mock_model.to.return_value = mock_model # Fix .to()
+    mock_model.to.return_value = mock_model 
     
     def model_side_effect(x_dict, *args, **kwargs):
-        # Return tensor on the same device as input
-        device = x_dict['macro'].device
-        return torch.zeros(x_dict['macro'].size(0), 2, requires_grad=True, device=device)
+        return torch.zeros(x_dict['macro'].size(0), 2, requires_grad=True, device=x_dict['macro'].device)
         
-    mock_model.side_effect = model_side_effect # Fix device issue
+    mock_model.side_effect = model_side_effect
     
     # Mock Optimizer
     mock_optimizer_instance = MagicMock()
     mock_optimizer_instance.param_groups = [{'lr': 0.001}]
     mock_optim.Adam.return_value = mock_optimizer_instance
     
-    # Mock Scheduler
+    # Mock LR Scheduler
     mock_lr_scheduler = MagicMock()
     mock_optim.lr_scheduler.CosineAnnealingLR.return_value = mock_lr_scheduler
     
     # Mock Data
     class MockData:
-        def __init__(self, device='cpu'):
-            self.device = device
-            self.x_dict = {'macro': torch.zeros(2, 4, device=device)}
-            # Add batch vector
-            self.x_dict['macro'].batch = torch.tensor([0, 0], dtype=torch.long, device=device) # 1 graph, 2 nodes
+        def __init__(self, dev='cpu'):
+            self.dev = dev
+            self.x_dict = {'macro': torch.zeros(2, 4, device=dev)}
+            self.x_dict['macro'].batch = torch.tensor([0, 0], dtype=torch.long, device=dev)
             self.edge_index_dict = {
-                ('macro', 'phys_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=device),
-                ('macro', 'logic_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=device),
-                ('macro', 'align_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=device)
+                ('macro', 'phys_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=dev),
+                ('macro', 'logic_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=dev),
+                ('macro', 'align_edge', 'macro'): torch.zeros(2, 0, dtype=torch.long, device=dev)
             }
-            self.y_coords = torch.zeros(2, 2, device=device)
+            self.y_coords = torch.zeros(2, 2, device=dev)
             self.num_graphs = 1
             self.info_dict = {
                 'aligned': [{'x':0,'y':0,'w':1,'h':1}, {'x':1,'y':1,'w':1,'h':1}],
                 'disturbed': [{'x':0,'y':0,'w':1,'h':1}, {'x':1,'y':1,'w':1,'h':1}]
             }
             
-        def to(self, device): 
-            # Return a new instance on the target device
-            return MockData(device=device)
+        def to(self, target_dev): 
+            return MockData(dev=target_dev)
             
         def __getitem__(self, key):
             if key == 'macro':
-                # Return an object that has .batch
                 m = MagicMock()
                 m.batch = self.x_dict['macro'].batch
+                m.edge_attr = None
                 return m
             m = MagicMock()
             m.edge_attr = None
             return m
 
-    mock_loader.return_value = [MockData()]
+    mock_loader.return_value = [MockData(dev=device.type)]
     
     # Mock Metrics
     mock_compute_metrics.return_value = {
@@ -123,21 +110,18 @@ def test_train_restorer_logging(mock_diff_cls, mock_csv_writer, mock_save, mock_
     with patch("builtins.open", mock_open()) as mock_file:
         train_restorer()
         
-        # Verify calls to csv.writer
         mock_writer_instance = mock_csv_writer.return_value
         
-        # Header
+        # Header check
         header_call = mock_writer_instance.writerow.call_args_list[0]
         header = header_call[0][0]
         assert "Val_Overlap" in header
         assert "Val_Align" in header
         
-        # Data
+        # Data row check
         data_call = mock_writer_instance.writerow.call_args_list[1]
         data = data_call[0][0]
-        # Epoch, Loss, MSE, Align, Val_MSE, Val_Overlap, Val_Align, LR
-        # Wait, if we use noise prediction, we might not have 'Align' loss in training?
-        # Spec says: "Implement MSE loss between predicted and ground truth noise."
-        # So training loss is noise MSE.
-        # Header might change. Let's see.
-
+        # [epoch, loss, val_mse, val_overlap, val_align, lr]
+        assert len(data) == 6
+        assert data[3] == 50.0 # Val_Overlap
+        assert data[4] == 0.8 # Val_Align
