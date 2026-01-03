@@ -25,11 +25,11 @@
     - [x] Sub-task: Render sample metrics and connect filter inputs to API calls.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Frontend Implementation' (Protocol in workflow.md) (1730043)
 
-## Phase 3: Integration & Polish
-- [ ] Task: Connect Backend and Frontend
-    - [ ] Sub-task: Ensure API responses correctly populate the UI.
-    - [ ] Sub-task: Handle edge cases (empty results, loading states).
-- [ ] Task: Final Polish
-    - [ ] Sub-task: Refine CSS styling for a cleaner look.
-    - [ ] Sub-task: Add "Launch Viewer" command to `GEMINI.md`.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration & Polish' (Protocol in workflow.md)
+## Phase 3: Integration & Polish [checkpoint: 905876d]
+- [x] Task: Connect Backend and Frontend (905876d)
+    - [x] Sub-task: Ensure API responses correctly populate the UI.
+    - [x] Sub-task: Handle edge cases (empty results, loading states).
+- [x] Task: Final Polish (905876d)
+    - [x] Sub-task: Refine CSS styling for a cleaner look.
+    - [x] Sub-task: Add "Launch Viewer" command to `GEMINI.md`.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Integration & Polish' (Protocol in workflow.md) (905876d)
