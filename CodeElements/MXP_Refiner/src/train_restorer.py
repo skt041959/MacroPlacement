@@ -9,9 +9,10 @@ import os
 import numpy as np
 
 from config import Config
-from model import GraphToSeqRestorer
+from model import GraphUNet
 from dataset import RestorationDataset
 from evaluate_model import compute_metrics
+from diffusion import DiffusionScheduler
 
 def train_restorer():
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -24,30 +25,34 @@ def train_restorer():
     train_loader = DataLoader(train_dataset, batch_size=Config.RESTORER_BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=Config.RESTORER_BATCH_SIZE, shuffle=False)
 
-    # 2. Model, Optimizer, Loss
-    model = GraphToSeqRestorer(
+    # 2. Model, Optimizer, Loss, Scheduler
+    model = GraphUNet(
         hidden_dim=Config.HIDDEN_DIM, 
         num_layers=Config.NUM_LAYERS, 
         num_heads=Config.NUM_HEADS
     ).to(device)
+    
+    diffusion = DiffusionScheduler()
+    # Move scheduler tensors to device if possible
+    diffusion.sqrt_alphas_cumprod = diffusion.sqrt_alphas_cumprod.to(device)
+    diffusion.sqrt_one_minus_alphas_cumprod = diffusion.sqrt_one_minus_alphas_cumprod.to(device)
     
     optimizer = optim.Adam(model.parameters(), lr=Config.RESTORER_LR)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=Config.RESTORER_EPOCHS)
     criterion = nn.MSELoss()
 
     # History for tracking
-    history = {'loss': [], 'mse': [], 'align': [], 'val_mse': [], 'val_overlap': [], 'val_align': [], 'lr': []}
+    history = {'loss': [], 'val_mse': [], 'val_overlap': [], 'val_align': [], 'lr': []}
     
     # Open log file
     log_file = open("training.log", "w", newline='')
     writer = csv.writer(log_file)
-    writer.writerow(["Epoch", "Loss", "MSE", "Align", "Val_MSE", "Val_Overlap", "Val_Align", "LR"])
+    # Loss is noise prediction MSE
+    writer.writerow(["Epoch", "Loss", "Val_MSE", "Val_Overlap", "Val_Align", "LR"])
 
     for epoch in range(Config.RESTORER_EPOCHS):
         model.train()
         epoch_loss = 0
-        epoch_mse = 0
-        epoch_align = 0
         current_lr = optimizer.param_groups[0]['lr']
         
         pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{Config.RESTORER_EPOCHS} (LR: {current_lr:.6f})")
@@ -55,7 +60,19 @@ def train_restorer():
         for data in pbar:
             data = data.to(device)
             
-            # Construct edge_attr_dict
+            # 1. Sample random timesteps
+            t = torch.randint(0, diffusion.num_steps, (data.num_graphs,), device=device)
+            
+            # 2. Add noise to coordinates (data.y_coords are ground truth x0)
+            noisy_x, noise = diffusion.add_noise(data.y_coords, t[data['macro'].batch])
+            
+            # 3. Update x_dict with noisy coordinates
+            # Current x_dict['macro'] has [cx, cy, w, h] where cx, cy is disturbed input.
+            # We replace them with noisy_x
+            x_dict = data.x_dict.copy()
+            x_dict['macro'] = torch.cat([noisy_x, data.x_dict['macro'][:, 2:]], dim=-1)
+            
+            # 4. Forward: Predict noise
             edge_attr_dict = {
                 ('macro', 'phys_edge', 'macro'): data['macro', 'phys_edge', 'macro'].edge_attr,
                 ('macro', 'logic_edge', 'macro'): data['macro', 'logic_edge', 'macro'].edge_attr,
@@ -63,42 +80,17 @@ def train_restorer():
             }
             
             optimizer.zero_grad()
+            pred_noise = model(x_dict, data.edge_index_dict, edge_attr_dict)
             
-            # Forward
-            pred_coords = model(data.x_dict, data.edge_index_dict, edge_attr_dict)
-            
-            # 1. Coordinate MSE Loss
-            mse_loss = criterion(pred_coords, data.y_coords)
-            
-            # 2. Alignment Loss
-            align_edge_index = data.edge_index_dict[('macro', 'align_edge', 'macro')]
-            if align_edge_index.shape[1] > 0:
-                src_idx = align_edge_index[0]
-                dst_idx = align_edge_index[1]
-                
-                gt_src = data.y_coords[src_idx]
-                gt_dst = data.y_coords[dst_idx]
-                
-                mask_x = (torch.abs(gt_src[:, 0] - gt_dst[:, 0]) < 1e-5).float()
-                mask_y = (torch.abs(gt_src[:, 1] - gt_dst[:, 1]) < 1e-5).float()
-                
-                diff = pred_coords[src_idx] - pred_coords[dst_idx]
-                
-                align_loss = (torch.pow(diff[:, 0], 2) * mask_x + torch.pow(diff[:, 1], 2) * mask_y).mean()
-            else:
-                align_loss = torch.tensor(0.0).to(device)
-            
-            loss = mse_loss + 0.1 * align_loss
+            # 5. Loss: MSE between pred and truth noise
+            loss = criterion(pred_noise, noise)
             
             # Backward
             loss.backward()
             optimizer.step()
             
             epoch_loss += loss.item()
-            epoch_mse += mse_loss.item()
-            epoch_align += align_loss.item()
-            
-            pbar.set_postfix({'Loss': f"{loss.item():.6f}", 'MSE': f"{mse_loss.item():.6f}"})
+            pbar.set_postfix({'Loss': f"{loss.item():.6f}"})
             
         # Validation
         model.eval()
@@ -110,20 +102,34 @@ def train_restorer():
         with torch.no_grad():
             for data in val_loader:
                 data = data.to(device)
+                
+                # Simple validation: run model once at mid-timestep or just MSE on noise
+                # For better tracking, we'll do mid-point noise prediction
+                t = torch.full((data.num_graphs,), diffusion.num_steps // 2, device=device, dtype=torch.long)
+                noisy_x, noise = diffusion.add_noise(data.y_coords, t[data['macro'].batch])
+                x_dict = data.x_dict.copy()
+                x_dict['macro'] = torch.cat([noisy_x, data.x_dict['macro'][:, 2:]], dim=-1)
+                
                 edge_attr_dict = {
                     ('macro', 'phys_edge', 'macro'): data['macro', 'phys_edge', 'macro'].edge_attr,
                     ('macro', 'logic_edge', 'macro'): data['macro', 'logic_edge', 'macro'].edge_attr,
                     ('macro', 'align_edge', 'macro'): None 
                 }
-                pred_coords = model(data.x_dict, data.edge_index_dict, edge_attr_dict)
-                val_mse += criterion(pred_coords, data.y_coords).item() * data.num_graphs # Weighted avg if needed, but mean is fine if batch size const
+                pred_noise = model(x_dict, data.edge_index_dict, edge_attr_dict)
+                val_mse += criterion(pred_noise, noise).item() * data.num_graphs
+                
+                # Approximate restoration for overlap/align metrics (Mid-point estimate)
+                # x0_pred = (xt - sqrt(1-alpha)*eps_pred) / sqrt(alpha)
+                sqrt_alpha = diffusion.sqrt_alphas_cumprod[t].view(-1, 1)[data['macro'].batch]
+                sqrt_one_minus_alpha = diffusion.sqrt_one_minus_alphas_cumprod[t].view(-1, 1)[data['macro'].batch]
+                pred_x0 = (noisy_x - sqrt_one_minus_alpha * pred_noise) / sqrt_alpha
                 
                 # Unbatch for metrics
                 batch_vector = data['macro'].batch
                 for g_idx in range(data.num_graphs):
                     mask = (batch_vector == g_idx)
                     feats = data.x_dict['macro'][mask]
-                    pred = pred_coords[mask]
+                    pred = pred_x0[mask]
                     target = data.y_coords[mask]
                     
                     w_raw = feats[:, 2] * Config.CANVAS_WIDTH
@@ -153,7 +159,7 @@ def train_restorer():
                             'h': float(h_raw[k])
                         })
                         
-                    # Restored
+                    # Restored (Estimate)
                     rest_cx = pred[:, 0] * Config.CANVAS_WIDTH
                     rest_cy = pred[:, 1] * Config.CANVAS_HEIGHT
                     restored_macros = []
@@ -171,13 +177,7 @@ def train_restorer():
                     
                 total_graphs += data.num_graphs
         
-        # Calculate Averages
-        # criterion is reduction='mean' (default), so val_mse accumulation above needs care.
-        # DataLoader iterates over batches. criterion(pred, y) gives mean MSE for that batch.
-        # Summing means and dividing by num_batches gives average mean MSE.
-        # But val_overlap is summed per graph.
-        
-        avg_val_mse = val_mse / len(val_loader) # This assumes equal batch sizes roughly, acceptable
+        avg_val_mse = val_mse / total_graphs
         avg_val_overlap = val_overlap / total_graphs
         avg_val_align = val_align_recovery / total_graphs
         
@@ -185,20 +185,16 @@ def train_restorer():
         scheduler.step()
         
         avg_loss = epoch_loss / len(train_loader)
-        avg_mse = epoch_mse / len(train_loader)
-        avg_align = epoch_align / len(train_loader)
         
         history['loss'].append(avg_loss)
-        history['mse'].append(avg_mse)
-        history['align'].append(avg_align)
         history['val_mse'].append(avg_val_mse)
         history['val_overlap'].append(avg_val_overlap)
         history['val_align'].append(avg_val_align)
         history['lr'].append(current_lr)
         
-        print(f"Epoch {epoch+1} - Loss: {avg_loss:.4f} | Val MSE: {avg_val_mse:.4f} | Val Ov: {avg_val_overlap:.1f} | Val Align: {avg_val_align:.4f}")
+        print(f"Epoch {epoch+1} - Noise Loss: {avg_loss:.4f} | Val Noise MSE: {avg_val_mse:.4f} | Val Ov: {avg_val_overlap:.1f} | Val Align: {avg_val_align:.4f}")
         
-        writer.writerow([epoch+1, avg_loss, avg_mse, avg_align, avg_val_mse, avg_val_overlap, avg_val_align, current_lr])
+        writer.writerow([epoch+1, avg_loss, avg_val_mse, avg_val_overlap, avg_val_align, current_lr])
         log_file.flush()
 
     log_file.close()
@@ -210,9 +206,9 @@ def train_restorer():
     # 4. Plot Curves
     plt.figure(figsize=(15, 5))
     plt.subplot(1, 3, 1)
-    plt.plot(history['loss'], label='Train Loss')
-    plt.plot(history['val_mse'], label='Val MSE')
-    plt.title('Loss')
+    plt.plot(history['loss'], label='Noise Loss')
+    plt.plot(history['val_mse'], label='Val Noise MSE')
+    plt.title('Denoising Loss')
     plt.legend()
     
     plt.subplot(1, 3, 2)

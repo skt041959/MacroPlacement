@@ -13,7 +13,7 @@
 - [x] Task: Implement Diffusion Scheduler and Forward SDE (1fc20b8)
     - [x] Sub-task: Add `DiffusionConfig` to `src/config.py` (timesteps, beta schedule).
     - [x] Sub-task: Implement `add_noise` function in `src/utils.py` or new `src/diffusion.py`.
-- [ ] Task: Update Supervised Training for Diffusion
+- [~] Task: Update Supervised Training for Diffusion
     - [ ] Sub-task: Modify `src/train_restorer.py` to sample random timesteps $t$ and train the model to predict noise $\epsilon$ or $x_0$.
     - [ ] Sub-task: Implement MSE loss between predicted and ground truth noise.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: DDPM Training Pipeline' (Protocol in workflow.md)
@@ -26,6 +26,6 @@
     - [ ] Sub-task: Use `torch.autograd.grad` to compute $\nabla_{x_t} E_{align}$ during the sampling loop.
     - [ ] Sub-task: Apply guidance update to $x_{t-1}$ using `guidance_scale`.
 - [ ] Task: Integration & Validation
-    - [ ] Sub-task: Update `src/evaluate_model.py` to use the new diffusion-based restorer.
+    - [~] Sub-task: Update `src/evaluate_model.py` to use the new diffusion-based restorer.
     - [ ] Sub-task: Compare alignment scores with and without guidance.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Alignment-Guided Inference' (Protocol in workflow.md)

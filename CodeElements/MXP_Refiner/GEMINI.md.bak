@@ -1,0 +1,50 @@
+# MXP Refiner - Project Context
+
+## Project Overview
+**MXP Refiner** is a macro placement refinement engine designed to optimize chip layouts using Reinforcement Learning (RL) and Heterogeneous Graph Neural Networks (GNNs). It leverages PyTorch and PyTorch Geometric to model the complex relationships between macros (logical connectivity, physical adjacency, and alignment) and optimizes for metrics like Half-Perimeter Wire Length (HPWL) and layout regularity.
+
+## Key Technologies
+-   **Language:** Python 3.10+
+-   **Package Manager:** `uv`
+-   **Deep Learning Framework:** PyTorch, PyTorch Geometric (PyG)
+-   **Data Serialization:** Protocol Buffers (Protobuf)
+-   **Visualization:** Matplotlib, HTML5/JS Canvas (Dashboard)
+
+## Development & Usage
+
+### Prerequisites
+-   `uv` must be installed.
+
+### Build and Run
+The project uses `uv` for dependency management and script execution.
+
+*   **Run Training:**
+    ```bash
+    ./run_training.sh
+    # OR
+    uv run src/train.py
+    ```
+    This command sets up the environment (if needed) and starts the reinforcement learning training loop defined in `src/train.py`. It generates a `dashboard.html` for visualization upon completion.
+
+*   **Run Tests:**
+    ```bash
+    uv run pytest
+    ```
+
+### Directory Structure
+*   **`src/`**: Source code for the application.
+    *   `model.py`: PyTorch models (`HeteroGATRefiner`, `HeteroGATEncoder`).
+    *   `env.py`: Custom RL environment (`MacroLayoutEnv`).
+    *   `train.py`: Main training loop.
+    *   `config.py`: Configuration parameters.
+    *   `geometry.py`: Geometric algorithms (Delaunay triangulation, overlap detection).
+*   **`conductor/`**: Project documentation and specifications.
+    *   `product.md`: Product vision and goals.
+    *   `tech-stack.md`: Technical stack details.
+*   **`tests/`**: Unit tests using `pytest`.
+
+## Conventions
+*   **Code Style:** Follows standard Python conventions (PEP 8).
+*   **Type Hinting:** Extensive use of Python type hints.
+*   **Testing:** All new features should be accompanied by unit tests in `tests/`.
+*   **Dependencies:** Managed via `requirements.txt` and `uv`.
