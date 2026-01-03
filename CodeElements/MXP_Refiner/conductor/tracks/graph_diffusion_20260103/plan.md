@@ -10,9 +10,9 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Graph U-Net Core Components' (Protocol in workflow.md) (724dc13)
 
 ## Phase 2: DDPM Training Pipeline
-- [ ] Task: Implement Diffusion Scheduler and Forward SDE
-    - [ ] Sub-task: Add `DiffusionConfig` to `src/config.py` (timesteps, beta schedule).
-    - [ ] Sub-task: Implement `add_noise` function in `src/utils.py` or new `src/diffusion.py`.
+- [x] Task: Implement Diffusion Scheduler and Forward SDE (1fc20b8)
+    - [x] Sub-task: Add `DiffusionConfig` to `src/config.py` (timesteps, beta schedule).
+    - [x] Sub-task: Implement `add_noise` function in `src/utils.py` or new `src/diffusion.py`.
 - [ ] Task: Update Supervised Training for Diffusion
     - [ ] Sub-task: Modify `src/train_restorer.py` to sample random timesteps $t$ and train the model to predict noise $\epsilon$ or $x_0$.
     - [ ] Sub-task: Implement MSE loss between predicted and ground truth noise.
