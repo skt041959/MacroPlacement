@@ -45,3 +45,13 @@ class Config:
     RESTORER_BATCH_SIZE = 32
     RESTORER_LR = 5e-4
     
+    # Diffusion Parameters
+    DIFFUSION_TIMESTEPS = 100
+    BETA_START = 1e-4
+    BETA_END = 0.02
+    GUIDANCE_SCALE = 1.0
+    GRID_K = 50.0 # Grid pitch for snapping
+    LAMBDA_GRID = 0.5
+    LAMBDA_CHANNEL = 0.5
+    ENERGY_THRESHOLD = 0.01
+    
