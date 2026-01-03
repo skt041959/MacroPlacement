@@ -1,8 +1,121 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv, Linear
+from torch_geometric.nn import HeteroConv, GATv2Conv, Linear, TopKPooling
 from torch.nn import TransformerDecoder, TransformerDecoderLayer
+
+from torch_geometric.utils import subgraph
+
+class GraphUNet(nn.Module):
+    def __init__(self, hidden_dim, num_layers, num_heads, pool_ratio=0.5):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+        self.num_layers = num_layers
+        
+        self.node_encoder = Linear(4, hidden_dim)
+        
+        # Encoder Path
+        self.encoder_convs = nn.ModuleList()
+        self.pools = nn.ModuleList()
+        for _ in range(num_layers):
+            conv = HeteroConv({
+                ('macro', 'phys_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+                ('macro', 'align_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, add_self_loops=False),
+                ('macro', 'logic_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+            }, aggr='sum')
+            self.encoder_convs.append(conv)
+            self.pools.append(TopKPooling(hidden_dim, ratio=pool_ratio))
+            
+        # Bottleneck
+        self.bottleneck = HeteroConv({
+            ('macro', 'phys_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+            ('macro', 'align_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, add_self_loops=False),
+            ('macro', 'logic_edge', 'macro'): GATv2Conv(hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+        }, aggr='sum')
+        
+        # Decoder Path
+        self.decoder_convs = nn.ModuleList()
+        for _ in range(num_layers):
+            conv = HeteroConv({
+                ('macro', 'phys_edge', 'macro'): GATv2Conv(2 * hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+                ('macro', 'align_edge', 'macro'): GATv2Conv(2 * hidden_dim, hidden_dim // num_heads, heads=num_heads, add_self_loops=False),
+                ('macro', 'logic_edge', 'macro'): GATv2Conv(2 * hidden_dim, hidden_dim // num_heads, heads=num_heads, edge_dim=1, add_self_loops=False),
+            }, aggr='sum')
+            self.decoder_convs.append(conv)
+            
+        self.output_layer = nn.Linear(hidden_dim, 2)
+
+    def _filter_edge_dict(self, edge_index_dict, edge_attr_dict, subset):
+        new_edge_index_dict = {}
+        new_edge_attr_dict = {}
+        
+        for edge_type, edge_index in edge_index_dict.items():
+            attr = edge_attr_dict.get(edge_type)
+            # subset is the perm indices
+            new_idx, new_attr = subgraph(subset, edge_index, edge_attr=attr, relabel_nodes=True, num_nodes=None) # num_nodes should be original total?
+            # subgraph relabel works relative to the nodes in subset.
+            new_edge_index_dict[edge_type] = new_idx
+            if attr is not None:
+                new_edge_attr_dict[edge_type] = new_attr
+            else:
+                new_edge_attr_dict[edge_type] = None
+                
+        return new_edge_index_dict, new_edge_attr_dict
+
+    def forward(self, x_dict, edge_index_dict, edge_attr_dict):
+        x = self.node_encoder(x_dict['macro'])
+        batch = x_dict.get('batch', torch.zeros(x.size(0), dtype=torch.long, device=x.device))
+        
+        xs = []
+        perms = []
+        edge_dicts = []
+        attr_dicts = []
+        
+        # Encoder
+        curr_x_dict = {'macro': x}
+        curr_edge_index_dict = edge_index_dict
+        curr_edge_attr_dict = edge_attr_dict
+        
+        for i in range(self.num_layers):
+            out_dict = self.encoder_convs[i](curr_x_dict, curr_edge_index_dict, curr_edge_attr_dict)
+            x = F.elu(out_dict['macro'])
+            xs.append(x)
+            edge_dicts.append(curr_edge_index_dict)
+            attr_dicts.append(curr_edge_attr_dict)
+            
+            # Pooling (gPool)
+            # Use phys_edge for pooling scores
+            phys_idx = curr_edge_index_dict[('macro', 'phys_edge', 'macro')]
+            phys_attr = curr_edge_attr_dict.get(('macro', 'phys_edge', 'macro'))
+            
+            x, _, _, batch, perm, score = self.pools[i](x, phys_idx, phys_attr, batch)
+            perms.append(perm)
+            
+            # Filter all edges for the pooled graph
+            curr_edge_index_dict, curr_edge_attr_dict = self._filter_edge_dict(curr_edge_index_dict, curr_edge_attr_dict, perm)
+            curr_x_dict = {'macro': x}
+            
+        # Bottleneck
+        out_dict = self.bottleneck(curr_x_dict, curr_edge_index_dict, curr_edge_attr_dict)
+        x = F.elu(out_dict['macro'])
+        
+        # Decoder
+        for i in range(self.num_layers - 1, -1, -1):
+            # Unpooling (gUnpool)
+            res = torch.zeros(xs[i].size(0), self.hidden_dim, device=x.device)
+            res[perms[i]] = x
+            x = res
+            
+            # Skip Connection (Concat)
+            x = torch.cat([x, xs[i]], dim=-1)
+            
+            curr_x_dict = {'macro': x}
+            # Use the edge dict from the corresponding encoder level (unpooled edges)
+            out_dict = self.decoder_convs[i](curr_x_dict, edge_dicts[i], attr_dicts[i])
+            x = F.elu(out_dict['macro'])
+            curr_x_dict = {'macro': x}
+            
+        return self.output_layer(x)
 
 class HeteroGATEncoder(nn.Module):
     def __init__(self, hidden_dim, num_layers, num_heads):
