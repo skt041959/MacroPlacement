@@ -1,13 +1,13 @@
 # Implementation Plan: Graph Diffusion Restoration Model
 
-## Phase 1: Graph U-Net Core Components
+## Phase 1: Graph U-Net Core Components [checkpoint: 724dc13]
 - [x] Task: Implement `GraphUNet` Architecture in `src/model.py` (565eed3)
-    - [ ] Sub-task: Implement `gPool` (Top-K Pooling) and `gUnpool` (Unpooling) layers.
-    - [ ] Sub-task: Define the `GraphUNet` class with Encoder, Bottleneck, and Decoder paths.
-    - [ ] Sub-task: Implement Skip Connections (Concat logic) between Encoder and Decoder.
+    - [x] Sub-task: Implement `gPool` (Top-K Pooling) and `gUnpool` (Unpooling) layers.
+    - [x] Sub-task: Define the `GraphUNet` class with Encoder, Bottleneck, and Decoder paths.
+    - [x] Sub-task: Implement Skip Connections (Concat logic) between Encoder and Decoder.
 - [x] Task: Unit Test Graph U-Net Connectivity (565eed3)
     - [x] Sub-task: Write tests in `tests/test_model_unet.py` to verify output shapes and skip connection logic with variable node counts.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Graph U-Net Core Components' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Graph U-Net Core Components' (Protocol in workflow.md) (724dc13)
 
 ## Phase 2: DDPM Training Pipeline
 - [ ] Task: Implement Diffusion Scheduler and Forward SDE
