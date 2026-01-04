@@ -76,7 +76,10 @@ class FloorplanRestorationInference:
                 x_in.requires_grad = True
                 
                 # Construct input dictionary
-                # Features: [x, y, w, h] -> we replace x,y with current noisy state
+                # Features: [x, y, w, h] -> we replace x,y with current noisy state (already in [-1, 1])
+                # Note: data.x_dict['macro'] contains [x_norm, y_norm, w_norm, h_norm]
+                # x_norm, y_norm are from builder (now [-1, 1])
+                # w_norm, h_norm are [0, 1]
                 current_feats = torch.cat([x_in, data.x_dict['macro'][:, 2:]], dim=-1)
                 x_dict = {'macro': current_feats}
                 
@@ -145,9 +148,10 @@ class FloorplanRestorationInference:
         restored_macros = []
         for i, m in enumerate(disturbed_macros):
             new_m = m.copy()
-            # pred_coords are centers normalized
-            cx = pred_coords[i, 0] * Config.CANVAS_WIDTH
-            cy = pred_coords[i, 1] * Config.CANVAS_HEIGHT
+            # pred_coords are centers normalized in [-1, 1]
+            # x_real = (x_norm + 1) / 2 * W
+            cx = (pred_coords[i, 0] + 1.0) / 2.0 * Config.CANVAS_WIDTH
+            cy = (pred_coords[i, 1] + 1.0) / 2.0 * Config.CANVAS_HEIGHT
             
             # Convert back to bottom-left (x, y)
             new_m['x'] = float(cx - m['w'] / 2)

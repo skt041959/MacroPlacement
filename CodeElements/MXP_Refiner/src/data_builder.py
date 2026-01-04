@@ -24,10 +24,10 @@ class GraphBuilder:
             cx = m['x'] + m['w'] / 2
             cy = m['y'] + m['h'] / 2
             centers.append([cx, cy])
-            # 归一化特征
+            # 归一化特征 [-1, 1] for pos, [0, 1] for size
             node_feats.append([
-                cx / Config.CANVAS_WIDTH, 
-                cy / Config.CANVAS_HEIGHT, 
+                2.0 * (cx / Config.CANVAS_WIDTH) - 1.0, 
+                2.0 * (cy / Config.CANVAS_HEIGHT) - 1.0, 
                 m['w'] / Config.CANVAS_WIDTH, 
                 m['h'] / Config.CANVAS_HEIGHT
             ])

@@ -6,8 +6,8 @@ class Config:
     CANVAS_HEIGHT = 1000.0
     
     # 构图阈值
-    ALIGN_DIST_THRESH = 50.0   # 对齐边的最大距离
-    ALIGN_SIZE_THRESH = 5.0    # 尺寸相似度容差
+    ALIGN_DIST_THRESH = 150.0   # Expanded to capture grid columns (spacing ~130)
+    ALIGN_SIZE_THRESH = 100.0    # Expanded to ignore random size variations in grid mode
     PHYS_EDGE_CUTOFF = 1500.0   # Delaunay 边的修剪距离
     
     # 模型参数

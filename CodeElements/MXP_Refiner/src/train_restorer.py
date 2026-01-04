@@ -204,17 +204,17 @@ def train_restorer():
                     w_h = feats[mask, 2:] * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT])
                     
                     aligned = np.concatenate([
-                        target_coords_np[mask] * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
+                        (target_coords_np[mask] + 1.0) / 2.0 * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
                         w_h
                     ], axis=1)
                     
                     disturbed = np.concatenate([
-                        feats[mask, :2] * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
+                        (feats[mask, :2] + 1.0) / 2.0 * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
                         w_h
                     ], axis=1)
                     
                     restored = np.concatenate([
-                        pred_coords_np[mask] * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
+                        (pred_coords_np[mask] + 1.0) / 2.0 * np.array([Config.CANVAS_WIDTH, Config.CANVAS_HEIGHT]) - w_h/2,
                         w_h
                     ], axis=1)
                     
