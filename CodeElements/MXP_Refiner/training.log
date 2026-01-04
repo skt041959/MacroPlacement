@@ -1,3 +1,8 @@
-Epoch,Loss,MSE,Align,LR
-1,0.2844967292949034,0.28343899479022805,0.010577339539155602,0.0005
-2,0.19113461301920895,0.1906232769354083,0.005113360251838598,0.00025
+2026-01-04 22:44:20,954 [INFO] Training on device: cuda
+2026-01-04 22:44:20,954 [INFO] Loading datasets from data/train_dataset.pt and data/val_dataset.pt
+2026-01-04 22:44:30,677 [INFO] Dataset sizes: Train=13500, Val=1500
+2026-01-04 22:44:30,677 [INFO] Initializing GraphUNet with depth=4, hidden_dim=128
+2026-01-04 22:44:30,965 [INFO] Total trainable parameters: 1,316,226
+2026-01-04 22:44:31,064 [INFO] Diffusion Verify - t=[0, 50, 99] Noise Stds: 0.0030, 1.2531, 0.6434
+2026-01-04 22:45:04,373 [INFO] Epoch 1 Summary - Loss: 0.9133 | Val MSE: 0.862036 | Val Ov: 21218.7 | Val Align: 0.6737 | Time: 26.9s (train) + 6.4s (val)
+2026-01-04 22:45:36,917 [INFO] Epoch 2 Summary - Loss: 0.7253 | Val MSE: 0.720425 | Val Ov: 26805.6 | Val Align: 0.6737 | Time: 26.3s (train) + 6.2s (val)

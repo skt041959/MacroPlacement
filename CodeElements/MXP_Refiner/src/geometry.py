@@ -1,4 +1,71 @@
 import numpy as np
+import torch
+
+def batch_knn_edges(x, batch, k=5):
+    """
+    Computes K-Nearest Neighbors edges for a batch of graphs.
+    x: [N, D] node features (coordinates)
+    batch: [N] batch indices
+    k: Number of neighbors
+    Returns: edge_index [2, E], edge_attr [E, 1]
+    """
+    # Create unique batch offsets to process all graphs in parallel without mixing
+    # But for simplicity with variable graph sizes, a loop over batch items is often safer/easier
+    # unless using torch_cluster.knn_graph (which we assume isn't available)
+    
+    device = x.device
+    num_graphs = batch.max().item() + 1
+    
+    src_list = []
+    dst_list = []
+    dists_list = []
+    
+    for i in range(num_graphs):
+        mask = (batch == i)
+        if not mask.any(): continue
+        
+        # Local indices in the batch
+        nodes = x[mask]
+        num_nodes = nodes.size(0)
+        
+        # If graph is too small for k, adjust k
+        curr_k = min(k, num_nodes - 1)
+        if curr_k <= 0: continue
+            
+        # Compute Pairwise Distance
+        # dists: [num_nodes, num_nodes]
+        dists = torch.cdist(nodes, nodes)
+        
+        # Get Top-K (smallest distances)
+        # We skip the 0-th element (self-loop with dist 0)
+        vals, indices = torch.topk(dists, k=curr_k + 1, dim=1, largest=False)
+        
+        vals = vals[:, 1:] # Drop self [N, K]
+        indices = indices[:, 1:] # [N, K]
+        
+        # Global Node Indices
+        # We need to map local indices 0..N-1 back to global indices
+        # find indices where mask is True
+        global_indices_map = torch.nonzero(mask).squeeze()
+        
+        # Source: [N, K] -> [N*K]
+        # Repeat global indices for source
+        src_local = global_indices_map.unsqueeze(1).repeat(1, curr_k)
+        
+        # Target: [N, K] -> mapped to global
+        dst_local = global_indices_map[indices]
+        
+        src_list.append(src_local.flatten())
+        dst_list.append(dst_local.flatten())
+        dists_list.append(vals.flatten())
+        
+    if not src_list:
+        return torch.empty((2, 0), dtype=torch.long, device=device), torch.empty((0, 1), dtype=torch.float, device=device)
+        
+    edge_index = torch.stack([torch.cat(src_list), torch.cat(dst_list)], dim=0)
+    edge_attr = torch.cat(dists_list).unsqueeze(1)
+    
+    return edge_index, edge_attr
 
 def calculate_overlap_area(m1, m2):
     """
@@ -90,3 +157,45 @@ def calculate_alignment_recovery(aligned, disturbed, restored, threshold=0.1):
         
     recovery = (s_restored - s_disturbed) / denom
     return float(np.clip(recovery, 0.0, 1.0))
+
+def alignment_energy_function(coords, align_edge_index, grid_pitch=50.0, lambda_grid=0.5, lambda_channel=0.5):
+    """
+    Computes a differentiable energy function for alignment guidance.
+    Lower energy = better alignment.
+    
+    coords: [N, 2] tensor (requires_grad=True)
+    align_edge_index: [2, E] tensor, indices of alignment edges
+    grid_pitch: float, target grid spacing
+    
+    Returns: scalar energy tensor
+    """
+    # 1. Grid Alignment Energy (Snap-to-Grid)
+    # E_grid = sum(sin^2(pi * x / K))
+    # Using sin^2 creates minima at integer multiples of K
+    
+    # Scale coords to be relative to pitch
+    scaled_coords = coords / grid_pitch
+    sin_term = torch.sin(np.pi * scaled_coords)
+    e_grid = torch.sum(sin_term ** 2)
+    
+    # 2. Channel Alignment Energy (Relative Alignment)
+    # E_channel = sum(||x_i - x_j||^2) for aligned pairs
+    if align_edge_index is not None and align_edge_index.size(1) > 0:
+        src, dst = align_edge_index
+        # Get coordinates of connected nodes
+        p1 = coords[src]
+        p2 = coords[dst]
+        
+        # We only care about aligning either X or Y, not necessarily Euclidean distance
+        # But generally, aligning edges implies they should be close in one dimension
+        # or exactly aligned. For simplicty in 'alignment edges' (which usually connect 
+        # macros that should be aligned), minimizing L2 distance acts as a strong prior.
+        # Alternatively, we could minimize min(|dx|, |dy|), but L2 is smoother.
+        
+        diff = p1 - p2
+        e_channel = torch.sum(diff ** 2)
+    else:
+        e_channel = torch.tensor(0.0, device=coords.device)
+        
+    total_energy = lambda_grid * e_grid + lambda_channel * e_channel
+    return total_energy

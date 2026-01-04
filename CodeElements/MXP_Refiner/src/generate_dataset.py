@@ -4,43 +4,50 @@ import torch
 import os
 
 def generate_categorized_datasets():
-    print(f"Starting categorized dataset generation. Total target: {Config.NUM_TRAIN_SAMPLES} per category.")
+    print(f"Starting categorized dataset generation.")
     
-    combined_data = []
+    # Define Split Sizes
+    # Total was 5000 per category. Let's keep that ratio.
+    train_samples_per_cat = int(Config.NUM_TRAIN_SAMPLES * (1 - Config.VAL_RATIO))
+    val_samples_per_cat = int(Config.NUM_TRAIN_SAMPLES * Config.VAL_RATIO)
+    
+    train_data = []
+    val_data = []
     
     for category in Config.CATEGORIES:
-        path = Config.DATASET_PATH_TEMPLATE.format(category)
-        print(f"\n--- Generating Category: {category} ---")
+        print(f"\n--- Processing Category: {category} ---")
         
-        # If file exists, we could skip, but let's overwrite to ensure fresh logic
-        if os.path.exists(path):
-            os.remove(path)
-            
-        dataset = RestorationDataset(
-            num_samples=Config.NUM_TRAIN_SAMPLES, 
+        # 1. Generate Training Data (Reference Topology)
+        print(f"Generating Training Data for {category} (Ref Topology)...")
+        train_ds = RestorationDataset(
+            num_samples=train_samples_per_cat, 
             mode=category,
             seed=Config.SEED, 
-            path=path
+            path=None, # Don't save intermediate per-category files to avoid clutter/confusion
+            use_reference_topology=True
         )
-        print(f"Category {category} complete. Saved to {path}")
-        combined_data.extend(dataset.data_list)
+        train_data.extend(train_ds.data_list)
         
-    # Also save a combined version for convenience
-    print(f"\nSaving combined dataset to {Config.DATASET_PATH}")
-    torch.save(combined_data, Config.DATASET_PATH)
-    
-    # 2. Perform Train/Val Split
-    print("\n--- Performing Train/Val Split ---")
+        # 2. Generate Validation Data (Disturbed Topology)
+        print(f"Generating Validation Data for {category} (Disturbed Topology)...")
+        # Use a different seed offset for validation to ensure no leakage
+        val_ds = RestorationDataset(
+            num_samples=val_samples_per_cat, 
+            mode=category,
+            seed=Config.SEED + 999, 
+            path=None,
+            use_reference_topology=False
+        )
+        val_data.extend(val_ds.data_list)
+        
+    # Shuffle
     import random
     random.seed(Config.SEED)
-    random.shuffle(combined_data)
+    random.shuffle(train_data)
+    random.shuffle(val_data)
     
-    num_val = int(len(combined_data) * Config.VAL_RATIO)
-    val_data = combined_data[:num_val]
-    train_data = combined_data[num_val:]
-    
-    print(f"Train samples: {len(train_data)}")
-    print(f"Val samples: {len(val_data)}")
+    print(f"\nTotal Train samples: {len(train_data)}")
+    print(f"Total Val samples: {len(val_data)}")
     
     torch.save(train_data, Config.TRAIN_DATA_PATH)
     torch.save(val_data, Config.VAL_DATA_PATH)

@@ -23,7 +23,8 @@ class RestorationDataset(Dataset[HeteroData]):
         mode: str | None = None, 
         noise_level: float | tuple[float, float] | None = None, 
         seed: int | None = None, 
-        path: str | None = None
+        path: str | None = None,
+        use_reference_topology: bool = True
     ) -> None:
         self.num_samples = num_samples
         self.count = count if count is not None else Config.MACRO_COUNT
@@ -42,7 +43,7 @@ class RestorationDataset(Dataset[HeteroData]):
             )
             
             self.data_list = []
-            print(f"Generating {num_samples} samples...")
+            print(f"Generating {num_samples} samples (Ref Topology={use_reference_topology})...")
             for _ in tqdm(range(num_samples), desc="Generating Data"):
                 aligned, disturbed = self.generator.generate(
                     count=self.count, 
@@ -51,7 +52,10 @@ class RestorationDataset(Dataset[HeteroData]):
                     grid_cols=Config.GRID_COLS
                 )
                 
-                builder = GraphBuilder(disturbed, netlist=[])
+                # Choose topology source
+                topology_source = aligned if use_reference_topology else disturbed
+                
+                builder = GraphBuilder(topology_source, netlist=[])
                 data = builder.build_hetero_graph()
                 
                 target_coords: list[list[float]] = []
