@@ -13,7 +13,7 @@ class Config:
     # 模型参数
     HIDDEN_DIM = 128
     NUM_HEADS = 4
-    NUM_LAYERS = 8
+    NUM_LAYERS = 4
     ACTION_DIM = 7  # [NoOp, Up, Down, Left, Right, Snap_X, Snap_Y]
     
     # RL 参数
@@ -41,9 +41,9 @@ class Config:
     VAL_DATA_PATH = 'data/val_dataset.pt'
 
     # 训练参数 (Restorer)
-    RESTORER_EPOCHS = 100
+    RESTORER_EPOCHS = 200
     RESTORER_BATCH_SIZE = 32
-    RESTORER_LR = 5e-4
+    RESTORER_LR = 2e-4
     
     # Diffusion Parameters
     DIFFUSION_TIMESTEPS = 100

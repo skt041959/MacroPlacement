@@ -17,6 +17,7 @@ from model import GraphUNet
 from dataset import RestorationDataset
 from evaluate_model import compute_metrics
 from diffusion import DiffusionScheduler
+from geometry import batch_knn_edges
 
 # Configure logging
 logging.basicConfig(
@@ -45,6 +46,9 @@ def train_restorer():
     
     signal.signal(signal.SIGINT, signal_handler)
 
+    # Flag for Dynamic Graph Updates (Currently Disabled)
+    USE_DYNAMIC_GRAPH = False
+    
     # 1. Dataset & Loader
     train_batch_size = Config.RESTORER_BATCH_SIZE * 4 # Default 32 * 4 = 128
     val_batch_size = Config.RESTORER_BATCH_SIZE * 8 # Default 32 * 8 = 256
@@ -115,17 +119,33 @@ def train_restorer():
             x_dict = data.x_dict.copy()
             x_dict['macro'] = torch.cat([noisy_x, data.x_dict['macro'][:, 2:]], dim=-1)
             
+            # Dynamic Graph Update (Optional)
+            current_edge_index = data['macro', 'phys_edge', 'macro'].edge_index
+            current_edge_attr = data['macro', 'phys_edge', 'macro'].edge_attr
+            
+            if USE_DYNAMIC_GRAPH:
+                # Re-compute edges based on noisy_x (current state)
+                # This simulates "Dynamic Graph CNN" where topology evolves with diffusion
+                new_edge_index, new_edge_attr = batch_knn_edges(noisy_x, data['macro'].batch, k=8)
+                current_edge_index = new_edge_index
+                current_edge_attr = new_edge_attr
+
             edge_attr_dict = {
-                ('macro', 'phys_edge', 'macro'): data['macro', 'phys_edge', 'macro'].edge_attr,
+                ('macro', 'phys_edge', 'macro'): current_edge_attr,
                 ('macro', 'logic_edge', 'macro'): data['macro', 'logic_edge', 'macro'].edge_attr,
                 ('macro', 'align_edge', 'macro'): None 
             }
             
+            # Update edge_index_dict to use the (potentially new) physical edges
+            edge_index_dict = data.edge_index_dict.copy()
+            edge_index_dict[('macro', 'phys_edge', 'macro')] = current_edge_index
+            
             optimizer.zero_grad()
-            pred_noise = model(x_dict, data.edge_index_dict, edge_attr_dict, t)
+            pred_noise = model(x_dict, edge_index_dict, edge_attr_dict, t)
             
             loss = criterion(pred_noise, noise)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             
             epoch_loss += loss.item()
